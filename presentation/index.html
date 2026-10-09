@@ -1,0 +1,1916 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Підсумки кварталу</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+@font-face{font-family:"Unbounded";font-weight:200 900;font-display:swap;src:url(fonts/Unbounded-cyrillic-4.woff2) format("woff2");unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:"Unbounded";font-weight:200 900;font-display:swap;src:url(fonts/Unbounded-latin-5.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+
+/* =====================================================================
+   Токени
+   ===================================================================== */
+:root{
+  --bg:#F5F5F7; --paper:#FFFFFF; --ink:#1D1D1F; --ink2:#424245; --mute:#6E6E73; --dim:#A1A1A6;
+  --line:rgba(0,0,0,.08); --line2:rgba(0,0,0,.14);
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 18px 50px -18px rgba(0,0,0,.22);
+  --shadow-lg:0 2px 6px rgba(0,0,0,.05),0 40px 90px -30px rgba(0,0,0,.35);
+  --navy:#002F5E;
+  --pa-ink:#26224A; --pa-blue:#3763E8; --pa-cream:#FFF9F0; --pa-sun:#FFC93D;
+  --green:#0C8455; --amber:#F5A31A; --red:#CC3E27;
+  --pv:#3D6BFF; --pv-dark:#07080B; --cyan:#22D3EE;
+  --od:#0E9F6E; --od-tint:#E3F6EE;
+  --pg:#7C5CFF; --pg-tint:#EFEBFF;
+  --ease:cubic-bezier(.16,1,.3,1);
+  --spring:cubic-bezier(.34,1.45,.64,1);
+  --f:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue","Segoe UI",Roboto,Arial,sans-serif;
+  --f-r:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Nunito","Segoe UI",sans-serif;
+  --f-m:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --f-pv:"Unbounded",-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#E8E8ED;color:var(--ink);overflow:hidden}
+body{font-family:var(--f);-webkit-font-smoothing:antialiased}
+body.hide-cursor{cursor:none}
+svg{display:block}
+.ico{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:50% 50%;overflow:hidden;background:var(--bg)}
+
+/* =====================================================================
+   Слайди і покрокова поява
+   ===================================================================== */
+.slide{position:absolute;inset:0;padding:96px 130px 110px;opacity:0;visibility:hidden;transform:scale(1.02);
+  transition:opacity .7s var(--ease),transform 1.1s var(--ease),visibility 0s .7s}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .7s var(--ease) .12s,transform 1.1s var(--ease) .12s,visibility 0s}
+.slide[data-theme="p0"]{--acc:var(--navy)}
+.slide[data-theme="p1"]{--acc:var(--pa-blue)}
+.slide[data-theme="p3"]{--acc:var(--pv)}
+.slide[data-theme="p4"]{--acc:var(--od)}
+.slide[data-theme="p2"]{--acc:var(--pg)}
+
+/* фони розділів */
+.sbg{position:absolute;inset:0;pointer-events:none;z-index:-1}
+.sbg-p1{background:radial-gradient(900px 600px at 10% 20%,rgba(55,99,232,.08),transparent 60%),radial-gradient(800px 600px at 95% 90%,rgba(255,201,61,.14),transparent 60%),radial-gradient(rgba(38,34,74,.09) 1.6px,transparent 1.8px) 0 0/30px 30px,var(--pa-cream)}
+.sbg-p3{background:linear-gradient(rgba(61,107,255,.06) 1px,transparent 1px) 0 0/120px 120px,linear-gradient(90deg,rgba(61,107,255,.06) 1px,transparent 1px) 0 0/120px 120px,#F4F6FB}
+.sbg-p4{background:radial-gradient(rgba(14,159,110,.12) 1.6px,transparent 1.8px) 0 0/34px 34px,#F3FAF6}
+.sbg-p2{background:radial-gradient(1000px 700px at 90% 0%,rgba(124,92,255,.12),transparent 60%),#F7F5FF}
+
+[data-b]{opacity:0;transform:translateY(30px);transition:opacity .8s var(--ease),transform 1s var(--spring);transition-delay:calc(var(--base,0ms) + var(--d,0) * 90ms)}
+[data-b].in{opacity:1;transform:none}
+.fx-scale[data-b]{transform:scale(.88)}
+.fx-left[data-b]{transform:translateX(-70px)}
+.fx-right[data-b]{transform:translateX(70px)}
+.fx-fade[data-b]{transform:none}
+.fx-scale[data-b].in,.fx-left[data-b].in,.fx-right[data-b].in{transform:none}
+
+.words .w{display:inline-block;opacity:0;transform:translateY(.3em);transition:opacity .5s var(--ease),transform .7s var(--ease);transition-delay:calc(var(--base,0ms) + var(--i) * 60ms)}
+.words.in .w{opacity:1;transform:none}
+
+/* =====================================================================
+   Базові елементи
+   ===================================================================== */
+.eyebrow{display:flex;align-items:center;gap:14px;font-size:24px;font-weight:600;color:var(--mute)}
+.title{font-size:78px;font-weight:700;letter-spacing:-.035em;line-height:1.04;margin-top:18px;max-width:1560px}
+.title em{font-style:normal;color:var(--acc)}
+.cap{font-size:34px;font-weight:500;color:var(--mute);line-height:1.35}
+.num{font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.card{background:var(--paper);border-radius:32px;box-shadow:var(--shadow)}
+.foot{position:absolute;left:130px;bottom:50px;font-size:20px;color:var(--dim);font-weight:500}
+.ph{display:inline-block;border:2px dashed #E0A100;color:#9A6B00;background:#FFF6D8;border-radius:12px;padding:0 .3em;font-weight:700}
+.ph-note{position:absolute;right:130px;bottom:46px;font-size:19px;color:#9A6B00;font-weight:600}
+.tag{display:inline-flex;align-items:center;gap:10px;padding:8px 18px 8px 10px;border-radius:999px;font-size:21px;font-weight:700}
+.tag-p1{background:#fff;border:2px solid var(--pa-ink);color:var(--pa-ink);font-family:var(--f-r);box-shadow:3px 3px 0 var(--pa-ink)}
+.tag-p1 i{width:26px;height:26px;border-radius:8px;background:var(--pa-blue);color:#fff;display:grid;place-items:center;font-style:normal;font-size:16px;font-weight:800}
+.tag-p3{background:var(--pv-dark);color:#fff;font-family:var(--f-pv);font-size:18px;padding:9px 18px}
+.tag-p3 i{width:10px;height:10px;border-radius:50%;background:var(--pv);box-shadow:0 0 12px var(--pv)}
+.tag-p4{background:var(--od-tint);color:#06603F;padding:8px 18px}
+.tag-p2{background:var(--pg-tint);color:#4B2FD6;padding:8px 18px}
+.tag-p4 i,.tag-p2 i{width:12px;height:12px;border-radius:4px;background:currentColor}
+.clayframe{border:4px solid var(--pa-ink);border-radius:28px;box-shadow:12px 12px 0 var(--pa-ink);overflow:hidden;background:#fff}
+.clayframe img{display:block;width:100%}
+
+#prog{position:absolute;left:0;bottom:0;height:5px;background:var(--pa,var(--navy));width:0;transition:width .8s var(--ease),background .8s;z-index:20}
+#black{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .5s;z-index:50}
+#black.on{opacity:1}
+#help{position:fixed;inset:0;display:none;place-items:center;background:rgba(245,245,247,.9);backdrop-filter:blur(10px);z-index:60;font-size:20px}
+#help.on{display:grid}
+#help .box{background:#fff;border-radius:24px;padding:36px 44px;box-shadow:var(--shadow-lg)}
+#help h3{font-size:26px;margin-bottom:18px}
+#help td{padding:7px 22px 7px 0;color:var(--mute)}
+#help td:first-child{color:var(--ink);font-family:var(--f-m);white-space:nowrap}
+#stepno{position:fixed;right:16px;bottom:14px;font:600 14px var(--f-m);color:var(--mute);z-index:40;display:none}
+#stepno.on{display:block}
+
+/* карта */
+.map .h{fill:#E6E9F0;stroke:#fff;stroke-width:1.3;transition:fill .7s var(--ease);transition-delay:calc(var(--base,0ms) + var(--i) * 14ms)}
+.map .r{fill:none;stroke:rgba(29,29,31,.32);stroke-width:2;stroke-linejoin:round}
+.map .o{fill:none;stroke:var(--ink);stroke-width:3;stroke-linejoin:round}
+.map .rl{font:700 21px var(--f);fill:var(--ink2);paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round}
+
+/* плитки-значки проєктів (перелітають з титулу в огляд) */
+.tile{position:absolute;width:84px;height:84px;border-radius:24px;display:grid;place-items:center;font-size:42px;z-index:3}
+.tile-p1{background:var(--pa-blue);color:#fff;border:3px solid var(--pa-ink);box-shadow:4px 4px 0 var(--pa-ink);font:800 44px var(--f-r)}
+.tile-p3{background:#fff;box-shadow:inset 0 0 0 1.5px rgba(61,107,255,.18),0 10px 30px -10px rgba(61,107,255,.45)}
+.tile-p4{background:var(--od);color:#fff;box-shadow:0 10px 30px -10px rgba(14,159,110,.8)}
+.tile-p2{background:var(--pg);color:#fff;box-shadow:0 10px 30px -10px rgba(124,92,255,.8)}
+
+/* =====================================================================
+   Титул (на основі v2)
+   ===================================================================== */
+#s-hello .glow{position:absolute;inset:0;background:radial-gradient(900px 700px at 80% 50%,rgba(0,47,94,.07),transparent 65%),radial-gradient(700px 520px at 8% 8%,rgba(55,99,232,.07),transparent 60%),radial-gradient(600px 500px at 45% 105%,rgba(255,201,61,.08),transparent 60%)}
+#s-hello .left{position:absolute;left:130px;top:50%;transform:translateY(-50%);width:1000px}
+#s-hello .logo{height:150px;width:auto;display:block;margin-bottom:44px}
+#s-hello .org{font-size:28px;font-weight:600;color:var(--mute);line-height:1.4}
+#s-hello .org b{display:block;color:var(--ink);font-size:30px}
+#s-hello .org .sec{display:inline-block;margin-top:14px;padding:6px 16px;border-radius:999px;background:rgba(0,47,94,.08);color:var(--navy);font-size:24px;font-weight:700}
+#s-hello h1{font-size:150px;font-weight:700;letter-spacing:-.05em;line-height:.95;margin:40px 0 36px}
+#s-hello .sub{font-size:32px;color:var(--mute);font-weight:500}
+#s-hello .chips{display:flex;gap:14px;margin-top:56px}
+#s-hello .chip{display:flex;align-items:center;gap:12px;padding:12px 20px 12px 12px;border-radius:20px;background:#fff;box-shadow:var(--shadow);font-size:22px;font-weight:700}
+#s-hello .chip i{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;font-style:normal;font-size:22px;color:#fff;flex:none}
+#s-hello .mapbox{position:absolute;right:120px;top:70px;height:940px;width:666px}
+#s-hello .map{width:100%;height:100%;overflow:visible}
+#s-hello .map .o{stroke:var(--navy);stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 3.2s var(--ease) .3s}
+#s-hello .map .r{opacity:0;transition:opacity 1.2s 1.6s}
+#s-hello .map .h{fill:var(--hc);opacity:0;transition:opacity 1s calc(1.2s + var(--i) * 12ms)}
+#s-hello .mapbox.in .map .o{stroke-dashoffset:0}
+#s-hello .mapbox.in .map .r,#s-hello .mapbox.in .map .h{opacity:1}
+#s-hello .mapbox.in .map .h.tw{animation:tw var(--dur) ease-in-out infinite;animation-delay:var(--dl)}
+@keyframes tw{0%,100%{fill:var(--hc)}45%,55%{fill:var(--tc)}}
+#s-hello .arc{fill:none;stroke:var(--navy);stroke-width:2;stroke-linecap:round;stroke-dasharray:4 10;opacity:0;transition:opacity .8s calc(2.6s + var(--k) * 120ms);animation:flow 1.4s linear infinite}
+#s-hello .mapbox.in .arc{opacity:.35}
+#s-hello .node{fill:#fff;stroke:var(--navy);stroke-width:3;opacity:0;transition:opacity .5s calc(2.8s + var(--k) * 120ms)}
+#s-hello .mapbox.in .node{opacity:1}
+#s-hello .pulse{opacity:0;transition:opacity .4s 3.2s}
+#s-hello .mapbox.in .pulse{opacity:.9}
+#s-hello .hubdot{fill:var(--navy)}
+#s-hello .ring{fill:none;stroke:var(--navy);stroke-width:3;transform-box:fill-box;transform-origin:center;animation:ping 2.6s var(--ease) infinite}
+#s-hello .city{font:700 28px var(--f);fill:var(--navy);paint-order:stroke;stroke:#fff;stroke-width:7px;stroke-linejoin:round}
+@keyframes ping{0%{transform:scale(.6);opacity:.9}100%{transform:scale(3.4);opacity:0}}
+@keyframes flow{to{stroke-dashoffset:-42}}
+
+/* =====================================================================
+   1. Огляд: чотири проєкти, кожен у своєму стилі
+   ===================================================================== */
+.ov{display:grid;grid-template-columns:repeat(4,1fr);gap:34px;margin-top:56px}
+.ov>div{height:650px;border-radius:36px;position:relative;overflow:hidden;padding:40px 38px;display:flex;flex-direction:column}
+.ov .okr{position:absolute;right:30px;top:34px;font-size:18px;font-weight:700;letter-spacing:.08em;opacity:.65}
+.ov h3{margin-top:auto;font-size:52px;font-weight:700;letter-spacing:-.035em;line-height:1}
+.ov p{font-size:26px;line-height:1.3;margin-top:16px;font-weight:500}
+.ov .url{margin-top:22px;font:600 18px var(--f-m);opacity:.7}
+
+.ov-p1{background:var(--pa-cream);border:3px solid var(--pa-ink);box-shadow:9px 9px 0 var(--pa-ink);color:var(--pa-ink);font-family:var(--f-r)}
+.ov-p1 .lg{width:84px;height:84px;border-radius:24px;background:var(--pa-blue);color:#fff;display:grid;place-items:center;font-size:44px;font-weight:800;border:3px solid var(--pa-ink);box-shadow:4px 4px 0 var(--pa-ink)}
+.ov-p1 .chips{display:flex;flex-direction:column;gap:12px;margin-top:40px}
+.ov-p1 .chip{display:flex;align-items:center;gap:14px;background:#fff;border:2.5px solid var(--pa-ink);border-radius:20px;padding:12px 16px;font-size:21px;font-weight:700;box-shadow:4px 4px 0 var(--pa-ink)}
+.ov-p1 .chip b{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:18px;flex:none}
+.ov-p1 .chip:nth-child(2){margin-left:22px}
+.ov-p1 h3{font-family:var(--f-r);font-weight:800}
+
+.ov-p3{background:#F6F8FC url(assets/proyav-ink.jpg) 50% 0/130% auto no-repeat;background-blend-mode:multiply;color:#0B0D12;box-shadow:inset 0 0 0 1.5px rgba(11,13,18,.08),var(--shadow)}
+.ov-p3:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(246,248,252,0) 30%,rgba(246,248,252,.85) 58%,#F6F8FC 72%)}
+.ov-p3>*{position:relative}
+.ov-p3 .mono{display:flex;flex-direction:column;gap:10px;font:600 17px "JetBrains Mono",var(--f-m);color:var(--pv)}
+.ov-p3 h3{font-family:var(--f-pv);font-weight:800;font-size:50px;letter-spacing:-.02em;color:#0B0D12}
+.ov-p3 p{color:#5E6673}
+
+.ov-p4{background:#fff;color:#073D29}
+.ov-p4 .mm{position:absolute;right:-20px;top:40px;width:300px;height:420px;opacity:.95}
+.ov-p4 .mm svg{width:100%;height:100%}
+.ov-p4 .mm .h{transition:none}
+.ov-p4 .rows{display:flex;flex-direction:column;gap:9px;margin-top:6px;width:150px}
+.ov-p4 .rows i{display:block;height:12px;border-radius:6px;background:var(--od-tint)}
+.ov-p4 .rows i:nth-child(odd){background:#C4EBD9;width:80%}
+.ov-p4 h3{color:var(--od)}
+
+.ov-p2{background:var(--pg-tint);color:#2A1A6E}
+.ov-p2 .sheet{position:absolute;left:50px;right:50px;top:60px;height:300px;background:#fff;border-radius:16px;box-shadow:var(--shadow);padding:30px;transform:rotate(-3deg)}
+.ov-p2 .sheet i{display:block;height:11px;border-radius:6px;background:#E7E2FF;margin-bottom:14px}
+.ov-p2 .sheet i:nth-child(1){width:60%;background:#CFC4FF;height:16px}
+.ov-p2 .sheet i:nth-child(3){width:80%}.ov-p2 .sheet i:nth-child(5){width:70%}
+.ov-p2 .stamp{position:absolute;right:28px;bottom:26px;border:4px solid var(--pg);color:var(--pg);border-radius:12px;padding:6px 14px;font-weight:800;font-size:24px;transform:rotate(-8deg)}
+.ov-p2 h3{color:var(--pg);font-size:40px}
+
+/* =====================================================================
+   Огляд (хаб): чотири блоки, кожен у стилі свого проєкту
+   ===================================================================== */
+.hub{position:absolute;left:130px;top:290px;width:1660px;height:650px}
+.blk{position:absolute;top:0;width:388px;height:650px;border-radius:36px;overflow:hidden;padding:150px 36px 38px;display:flex;flex-direction:column;transition:opacity .6s,filter .6s,box-shadow .6s}
+.blk h3{margin-top:auto;font-size:50px;font-weight:700;letter-spacing:-.035em;line-height:1}
+.blk p{font-size:25px;line-height:1.3;margin-top:14px;font-weight:500}
+.blk .url{margin-top:20px;font:600 18px var(--f-m);opacity:.7}
+.blk .okr{position:absolute;right:28px;top:36px;font-size:18px;font-weight:700;letter-spacing:.08em;opacity:.6}
+.blk .big{margin-top:auto;font-size:104px;font-weight:700;letter-spacing:-.05em;line-height:.95}
+.blk .big.sm{font-size:56px;line-height:1.02}
+.blk-p1{background:var(--pa-cream);border:3px solid var(--pa-ink);box-shadow:9px 9px 0 var(--pa-ink);color:var(--pa-ink);font-family:var(--f-r)}
+.blk-p1 h3{font-family:var(--f-r);font-weight:800}
+.blk-p1 .chips{display:flex;flex-direction:column;gap:12px}
+.blk-p1 .chip{display:flex;align-items:center;gap:14px;background:#fff;border:2.5px solid var(--pa-ink);border-radius:20px;padding:11px 16px;font-size:21px;font-weight:700;box-shadow:4px 4px 0 var(--pa-ink)}
+.blk-p1 .chip b{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:17px;flex:none}
+.blk-p1 .chip:nth-child(2){margin-left:22px}
+.blk-p3{background:#F6F8FC url(assets/proyav-ink.jpg) 50% 0/130% auto no-repeat;background-blend-mode:multiply;color:#0B0D12;box-shadow:inset 0 0 0 1.5px rgba(11,13,18,.08),var(--shadow)}
+.blk-p3:before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(246,248,252,0) 30%,rgba(246,248,252,.85) 58%,#F6F8FC 72%)}
+.blk-p3>*{position:relative}
+.blk-p3 .mono{display:flex;flex-direction:column;gap:10px;font:600 17px "JetBrains Mono",var(--f-m);color:var(--pv)}
+.blk-p3 h3{font-family:var(--f-pv);font-weight:800;font-size:48px;letter-spacing:-.02em;color:#0B0D12}
+.blk-p3 p{color:#5E6673}
+.blk-p4{background:#fff;color:#073D29}
+.blk-p4 .mm{position:absolute;right:-24px;top:30px;width:290px;height:410px}
+.blk-p4 .mm svg{width:100%;height:100%}
+.blk-p4 .mm .h{transition:none;fill:color-mix(in srgb,var(--od) calc(15% + var(--t) * 70%),#E3F6EE)}
+.blk-p4 h3{color:var(--od);position:relative}
+.blk-p4 p,.blk-p4 .big{position:relative}
+.blk-p2{background:var(--pg-tint);color:#2A1A6E}
+.blk-p2 .sheet{position:absolute;left:46px;right:46px;top:150px;height:250px;background:#fff;border-radius:16px;box-shadow:var(--shadow);padding:28px;transform:rotate(-3deg)}
+.blk-p2 .sheet i{display:block;height:11px;border-radius:6px;background:#E7E2FF;margin-bottom:14px}
+.blk-p2 .sheet i:nth-child(1){width:60%;background:#CFC4FF;height:16px}
+.blk-p2 .sheet i:nth-child(3){width:80%}.blk-p2 .sheet i:nth-child(5){width:70%}
+.blk-p2 .stamp{position:absolute;right:24px;bottom:22px;border:4px solid var(--pg);color:var(--pg);border-radius:12px;padding:5px 12px;font-weight:800;font-size:22px;transform:rotate(-8deg)}
+.blk-p2 h3{color:var(--pg);font-size:40px}
+.hub .done{opacity:.5;filter:saturate(.6)}
+.hub .done:after{content:"✓";position:absolute;right:22px;top:24px;width:52px;height:52px;border-radius:50%;background:#1DB954;color:#fff;display:grid;place-items:center;font:800 28px var(--f);z-index:2}
+.hub .done .okr{display:none}
+.hub .next{box-shadow:0 0 0 6px var(--acc-n,#0071E3),0 40px 80px -30px rgba(0,0,0,.45)}
+.hub .blk-p3.next{--acc-n:var(--pv)}.hub .blk-p4.next{--acc-n:var(--od)}.hub .blk-p2.next{--acc-n:var(--pg)}
+.hub .tile.dim{opacity:.5}
+.hub-logo{position:absolute;right:130px;top:86px;height:84px;width:auto}
+
+/* =====================================================================
+   ПРО.ШІ — відкривач (розкривається з блока огляду)
+   ===================================================================== */
+.open{position:absolute;inset:0;overflow:hidden}
+#s-p1-open{padding:0}
+#s-p1-open .open{background:radial-gradient(900px 600px at 15% 30%,rgba(55,99,232,.12),transparent 60%),radial-gradient(800px 600px at 90% 80%,rgba(255,201,61,.18),transparent 60%),radial-gradient(rgba(38,34,74,.10) 1.6px,transparent 1.8px) 0 0/30px 30px,var(--pa-cream)}
+#s-p1-open .left{position:absolute;left:130px;top:200px;width:720px;font-family:var(--f-r);color:var(--pa-ink)}
+#s-p1-open .lg{width:120px;height:120px;border-radius:34px;background:var(--pa-blue);color:#fff;display:grid;place-items:center;font-size:64px;font-weight:800;border:4px solid var(--pa-ink);box-shadow:7px 7px 0 var(--pa-ink)}
+#s-p1-open h1{font-size:160px;font-weight:800;letter-spacing:-.04em;line-height:1;margin-top:46px}
+#s-p1-open .tagline{font-size:58px;font-weight:800;letter-spacing:-.02em;margin-top:22px;line-height:1.1}
+#s-p1-open .tagline span{color:var(--pa-blue)}
+#s-p1-open .desc{font:600 30px/1.35 var(--f);color:#5D5880;margin-top:24px}
+#s-p1-open .url{display:inline-block;margin-top:46px;padding:16px 30px;border-radius:999px;background:var(--pa-blue);color:#fff;border:3px solid var(--pa-ink);box-shadow:5px 5px 0 var(--pa-ink);font:700 30px var(--f-r)}
+#s-p1-open .shotwrap{position:absolute;left:920px;top:150px;width:1080px}
+#s-p1-open .shotwrap{transform-origin:left center}
+#s-p1-open .shotwrap.fx-right[data-b]{transform:translateX(160px) rotate(2deg)}
+#s-p1-open .shotwrap.fx-right[data-b].in{transform:rotate(-2deg)}
+#s-p1-open .badge{position:absolute;right:80px;top:100px;width:110px;height:110px;border-radius:28px;background:#FDE7E2;border:3px solid var(--pa-ink);box-shadow:5px 5px 0 var(--pa-ink);display:grid;place-items:center;font-size:54px;color:var(--red);animation:float 5s ease-in-out infinite;rotate:8deg;z-index:2}
+.clay{position:absolute;display:flex;align-items:center;gap:18px;background:#fff;border:3px solid var(--pa-ink);border-radius:26px;padding:18px 26px;box-shadow:6px 6px 0 var(--pa-ink);font:800 28px var(--f-r);color:var(--pa-ink);animation:float 6s ease-in-out infinite}
+.clay small{display:block;font:600 19px var(--f);color:#5D5880;margin-top:2px}
+.clay b{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:26px;flex:none;border:2.5px solid var(--pa-ink)}
+@keyframes float{0%,100%{translate:0 0}50%{translate:0 -10px}}
+#s-p1-open .c1{left:830px;top:720px;animation-delay:-1s}
+#s-p1-open .c2{left:1170px;top:820px;animation-delay:-3s}
+#s-p1-open .c3{left:1500px;top:730px;animation-delay:-2s}
+
+/* ПРО.ШІ — навіщо */
+#s-p1-why .who{position:absolute;left:760px;top:340px;width:400px;display:flex;flex-direction:column;align-items:center;font-family:var(--f-r);color:var(--pa-ink);text-align:center}
+#s-p1-why .who .av{width:250px;height:250px;border-radius:50%;background:#fff;border:4px solid var(--pa-ink);box-shadow:9px 9px 0 var(--pa-ink);display:grid;place-items:center;font-size:150px;color:var(--pa-ink);position:relative}
+#s-p1-why .who .ai{position:absolute;right:-26px;top:-14px;width:100px;height:100px;border-radius:30px;background:var(--pa-blue);color:#fff;display:grid;place-items:center;font:800 40px var(--f-r);border:3px solid var(--pa-ink);box-shadow:5px 5px 0 var(--pa-ink);rotate:10deg;animation:float 5s ease-in-out infinite}
+#s-p1-why .who b{font-size:38px;font-weight:800;margin-top:44px;line-height:1.1}
+#s-p1-why .who small{font:600 24px var(--f);color:#5D5880;margin-top:10px}
+#s-p1-why svg.links{position:absolute;inset:0;width:1920px;height:1080px;pointer-events:none}
+#s-p1-why .links path{fill:none;stroke:var(--pa-ink);stroke-width:3;stroke-dasharray:4 10;opacity:.45}
+#s-p1-why .goal{position:absolute;top:300px;width:560px;height:640px;border-radius:36px;border:3px solid var(--pa-ink);box-shadow:9px 9px 0 var(--pa-ink);padding:44px 46px;font-family:var(--f-r);color:var(--pa-ink);display:flex;flex-direction:column}
+#s-p1-why .g1{left:130px;background:#E4F6EC}
+#s-p1-why .g2{right:130px;background:#EAF0FF}
+#s-p1-why .goal .ic{width:100px;height:100px;border-radius:30px;display:grid;place-items:center;color:#fff;font-size:54px;border:3px solid var(--pa-ink);box-shadow:5px 5px 0 var(--pa-ink)}
+#s-p1-why .g1 .ic{background:var(--green)}#s-p1-why .g2 .ic{background:var(--pa-blue)}
+#s-p1-why .goal h3{font-size:64px;font-weight:800;letter-spacing:-.03em;margin-top:30px;line-height:1}
+#s-p1-why .goal p{font:600 27px/1.3 var(--f);color:#5D5880;margin-top:14px}
+#s-p1-why .chat{margin-top:auto;background:#fff;border:2.5px solid var(--pa-ink);border-radius:24px 24px 24px 6px;padding:22px 24px;font:600 25px/1.6 var(--f);box-shadow:4px 4px 0 var(--pa-ink)}
+#s-p1-why .chat .pd{display:inline-flex;vertical-align:baseline;line-height:1.3}
+#s-p1-why .chat .pd>*{display:inline-block;white-space:nowrap;overflow:hidden;border-radius:8px;padding:0 8px;transition:max-width .6s var(--ease),padding .6s var(--ease),opacity .4s}
+#s-p1-why .chat .pd s{background:#FDE7E2;color:#B3261E;text-decoration:line-through 3px;max-width:320px}
+#s-p1-why .chat .pd i{font-style:normal;background:#DDF3E6;color:#13723F;font-weight:800;max-width:0;padding:0;opacity:0}
+#s-p1-why .g1.in .chat .pd s{max-width:0;padding:0;opacity:0;transition-delay:calc(var(--base,0ms) + 2s + var(--k)*.5s)}
+#s-p1-why .g1.in .chat .pd i{max-width:200px;padding:0 8px;opacity:1;transition-delay:calc(var(--base,0ms) + 2.3s + var(--k)*.5s)}
+#s-p1-why .chat-l{margin-top:auto;font:800 20px var(--f);letter-spacing:.06em;color:#13723F;margin-bottom:12px}
+#s-p1-why .chat-l+.chat{margin-top:0}
+#s-p1-why .docs{margin-top:auto;display:flex;flex-direction:column;gap:14px}
+#s-p1-why .docs span{display:flex;align-items:center;gap:16px;background:#fff;border:2.5px solid var(--pa-ink);border-radius:18px;padding:14px 20px;font:700 26px var(--f);box-shadow:4px 4px 0 var(--pa-ink)}
+#s-p1-why .docs span .ico{font-size:30px;color:var(--pa-blue)}
+#s-p1-why .docs span em{margin-left:auto;font-style:normal;width:40px;height:40px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:22px;transform:scale(0);transition:transform .5s var(--spring)}
+#s-p1-why .g2.in .docs span em{transform:none;transition-delay:calc(var(--base,0ms) + 1s + var(--k)*.3s)}
+
+/* ПРО.ШІ — рішення: курс */
+#s-p1-course .shotwrap{position:absolute;left:130px;top:290px;width:1060px}
+#s-p1-course .facts{position:absolute;left:1270px;top:300px;display:flex;flex-direction:column;gap:22px;width:520px}
+#s-p1-course .fact{display:flex;align-items:center;gap:26px;padding:24px 30px;border-radius:26px;background:#fff;border:3px solid var(--pa-ink);box-shadow:6px 6px 0 var(--pa-ink);color:var(--pa-ink)}
+#s-p1-course .fact .num{font-size:72px;line-height:1;min-width:120px;color:var(--pa-blue)}
+#s-p1-course .fact span{font:700 28px/1.2 var(--f)}
+
+/* ПРО.ШІ — модулі: маршрут */
+#s-p1-mod .route{position:absolute;left:0;top:0;width:1920px;height:1080px}
+#s-p1-mod .rail{position:absolute;left:220px;width:1520px;top:600px;height:12px;margin-top:-6px;border-radius:6px;background:repeating-linear-gradient(90deg,rgba(38,34,74,.18) 0 14px,transparent 14px 26px)}
+#s-p1-mod .fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:6px;background:var(--pa-blue)}
+#s-p1-mod.active .fill{width:100%;transition:width 3.4s cubic-bezier(.45,.05,.55,.95) calc(var(--base,0ms) + .5s)}
+#s-p1-mod .tok{position:absolute;right:-34px;top:50%;width:68px;height:68px;margin-top:-34px;border-radius:20px;background:var(--pa-blue);color:#fff;display:grid;place-items:center;font:800 34px var(--f-r);border:3px solid var(--pa-ink);box-shadow:4px 4px 0 var(--pa-ink);z-index:3;opacity:0;transition:opacity .3s calc(var(--base,0ms) + .5s)}
+#s-p1-mod.active .tok{opacity:1}
+#s-p1-mod.active .fill.end .tok{opacity:0;transition-delay:0s}
+#s-p1-mod .st{position:absolute;top:600px;width:300px;margin-left:-150px;display:flex;flex-direction:column;align-items:center;text-align:center;font-family:var(--f-r);color:var(--pa-ink)}
+#s-p1-mod .st .c{width:140px;height:140px;margin-top:-70px;border-radius:50%;background:#fff;border:4px solid var(--pa-ink);box-shadow:6px 6px 0 var(--pa-ink);display:grid;place-items:center;font-size:62px;color:var(--pa-blue);transform:scale(0);transition:transform .6s var(--spring),background .4s,color .4s}
+#s-p1-mod.active .st .c{transform:none;transition-delay:calc(var(--base,0ms) + .5s + var(--t)*1ms)}
+#s-p1-mod .st .n{font:800 20px var(--f);letter-spacing:.08em;color:var(--pa-blue);margin-top:30px}
+#s-p1-mod .st b{font-size:36px;font-weight:800;letter-spacing:-.02em;margin-top:6px;line-height:1.05}
+#s-p1-mod .st small{font:600 23px/1.3 var(--f);color:#5D5880;margin-top:8px}
+#s-p1-mod .st .n,#s-p1-mod .st b,#s-p1-mod .st small{opacity:0;transform:translateY(14px);transition:opacity .5s,transform .6s var(--ease)}
+#s-p1-mod.active .st .n,#s-p1-mod.active .st b,#s-p1-mod.active .st small{opacity:1;transform:none;transition-delay:calc(var(--base,0ms) + .75s + var(--t)*1ms)}
+#s-p1-mod .st.key .c{width:230px;height:230px;margin-top:-115px;background:var(--red);color:#fff;font-size:110px;box-shadow:9px 9px 0 var(--pa-ink)}
+#s-p1-mod .st.key .flag{position:absolute;top:-200px;padding:10px 22px;border-radius:999px;background:#fff;border:3px solid var(--pa-ink);box-shadow:4px 4px 0 var(--pa-ink);font:800 24px var(--f-r);color:var(--red);white-space:nowrap;opacity:0;transform:translateY(10px) rotate(-4deg);transition:opacity .5s,transform .6s var(--spring)}
+#s-p1-mod.active .st.key .flag{opacity:1;transform:rotate(-4deg);transition-delay:calc(var(--base,0ms) + 1s + var(--t)*1ms)}
+#s-p1-mod .st.key .n{color:var(--red)}
+#s-p1-mod .st.key b{font-size:44px}
+#s-p1-mod .st.fin .c{background:var(--pa-sun);color:var(--pa-ink)}
+#s-p1-mod .st.up{top:600px}
+#s-p1-mod .st.up .lab{position:absolute;bottom:175px;display:flex;flex-direction:column;align-items:center;width:300px}
+#s-p1-mod .st.up .lab .n{margin-top:0}
+
+/* до/після */
+.ba{margin-top:80px;display:flex;flex-direction:column;gap:60px}
+.ba .row{display:grid;grid-template-columns:560px 1fr 220px;align-items:center;gap:40px}
+.ba .t{font-size:38px;font-weight:700;line-height:1.15;letter-spacing:-.02em}
+.ba .track{height:70px;border-radius:20px;background:rgba(38,34,74,.08);position:relative;overflow:hidden}
+.ba .bar{position:absolute;left:0;top:0;bottom:0;border-radius:20px;width:0;background:#B9B9C0}
+.ba .row.in .bar{animation:shrink 3s var(--ease) forwards;animation-delay:calc(var(--base,0ms) + var(--d)*90ms)}
+@keyframes shrink{0%{width:0;background:#B9B9C0}30%{width:var(--w0);background:#B9B9C0}55%{width:var(--w0);background:#B9B9C0}100%{width:var(--w1);background:var(--pa-blue)}}
+.ba .old{position:absolute;right:28px;top:50%;transform:translateY(-50%);font-size:34px;font-weight:700;color:var(--mute)}
+.ba .old:after{content:"";position:absolute;left:-6px;right:-6px;top:52%;height:4px;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
+.ba .row.in .old:after{transform:scaleX(1);transition-delay:calc(var(--base,0ms) + var(--d)*90ms + 1.5s)}
+.ba .new{font-size:72px;font-weight:700;letter-spacing:-.04em;color:var(--pa-blue);opacity:0;transform:translateX(-20px);transition:all .7s var(--spring)}
+.ba .row.in .new{opacity:1;transform:none;transition-delay:calc(var(--base,0ms) + var(--d)*90ms + 2.1s)}
+
+/* сертифікат */
+#s-p1-cert .cert{position:absolute;left:150px;top:300px;width:820px;height:600px;border-radius:34px;background:#FCF3DF;border:4px solid var(--pa-ink);box-shadow:12px 12px 0 var(--pa-ink);padding:22px;font-family:var(--f-r);color:#5A3E0A;transform-origin:center}
+#s-p1-cert .cert.fx-left[data-b]{transform:translateX(-90px) rotate(-6deg)}
+#s-p1-cert .cert.fx-left[data-b].in{transform:rotate(-3deg)}
+#s-p1-cert .cert .in2{height:100%;border:3px dashed #EBC879;border-radius:24px;padding:34px 44px 30px;display:flex;flex-direction:column}
+#s-p1-cert .cert .top{display:flex;align-items:center;gap:18px;font:800 20px var(--f);letter-spacing:.08em;color:#8A6A2E}
+#s-p1-cert .cert .md{width:70px;height:70px;border-radius:50%;background:#E0A21E;border:3px solid var(--pa-ink);box-shadow:3px 3px 0 var(--pa-ink);display:grid;place-items:center;font-size:36px;color:var(--pa-ink)}
+#s-p1-cert .cert h3{font-size:48px;font-weight:700;margin-top:22px;letter-spacing:-.02em;color:#5A3E0A}
+#s-p1-cert .cert hr{width:90px;height:5px;border:0;border-radius:3px;background:#E0A21E;margin-top:16px}
+#s-p1-cert .cert .nm{font-size:40px;font-weight:800;margin-top:22px;color:#3D2A06}
+#s-p1-cert .cert .ps{font:600 25px var(--f);color:#6E5A3A;margin-top:6px}
+#s-p1-cert .cert .tags{display:flex;gap:14px;margin-top:18px}
+#s-p1-cert .cert .tags span{padding:10px 18px;border-radius:14px;background:#F6E2B5;font:800 22px var(--f);color:#5A3E0A}
+#s-p1-cert .cert .code{margin-top:auto;display:flex;align-items:center;gap:18px;padding-top:18px;border-top:2px solid #EED9A8;font:800 19px var(--f);letter-spacing:.08em;color:#8A6A2E}
+#s-p1-cert .cert .code tt{font:700 32px ui-monospace,Menlo,monospace;letter-spacing:.02em;color:#3D2A06;padding:6px 14px;border-radius:12px;transition:background .5s,box-shadow .5s}
+#s-p1-cert.b1 .cert .code tt{background:#fff;box-shadow:0 0 0 4px var(--pa-blue)}
+#s-p1-cert svg.fly{position:absolute;inset:0;width:1920px;height:1080px;pointer-events:none}
+#s-p1-cert .fly path{fill:none;stroke:var(--pa-blue);stroke-width:5;stroke-dasharray:12 9;animation:flow 1s linear infinite}
+#s-p1-cert .br{position:absolute;left:1090px;top:330px;width:700px;border-radius:30px;background:#fff;border:4px solid var(--pa-ink);box-shadow:12px 12px 0 var(--pa-ink);overflow:hidden;font-family:var(--f-r);color:var(--pa-ink)}
+#s-p1-cert .br .bar{display:flex;align-items:center;gap:10px;padding:18px 22px;background:#F3F1EC;border-bottom:3px solid var(--pa-ink)}
+#s-p1-cert .br .bar i{width:16px;height:16px;border-radius:50%;background:#D8D4CC}
+#s-p1-cert .br .url{margin-left:12px;flex:1;padding:10px 18px;border-radius:999px;background:#fff;border:2px solid rgba(38,34,74,.2);font:600 21px var(--f);color:#5D5880;white-space:nowrap;overflow:hidden}
+#s-p1-cert .br .url b{color:var(--pa-ink)}
+#s-p1-cert .br .ok{margin:30px;padding:30px;border-radius:26px;background:#DDF6EA;border:3px solid var(--pa-ink)}
+#s-p1-cert .br .ok .h{display:flex;align-items:center;gap:20px;font-size:38px;font-weight:800;color:#0E6B3C}
+#s-p1-cert .br .ok .h em{width:66px;height:66px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-style:normal;font-size:34px;border:3px solid var(--pa-ink);transform:scale(0);transition:transform .6s var(--spring)}
+#s-p1-cert .br.in .ok .h em{transform:none;transition-delay:calc(var(--base,0ms) + .9s)}
+#s-p1-cert .br .rows{margin-top:24px;display:flex;flex-direction:column;gap:12px;font:600 23px var(--f)}
+#s-p1-cert .br .rows div{display:flex;justify-content:space-between;gap:20px;color:#5D5880}
+#s-p1-cert .br .rows b{color:#0E6B3C;font-weight:800}
+#s-p1-cert .pill{position:absolute;display:flex;align-items:center;gap:14px;background:#fff;border-radius:999px;padding:12px 26px 12px 12px;border:3px solid var(--pa-ink);box-shadow:5px 5px 0 var(--pa-ink);font:800 26px var(--f-r);color:var(--pa-ink);z-index:2;animation:float 6s ease-in-out infinite}
+#s-p1-cert .pill b{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:26px;border:2.5px solid var(--pa-ink)}
+
+/* результати */
+#s-p1-res1 .chart{position:absolute;left:130px;right:130px;top:330px;height:560px;display:flex;align-items:flex-end;gap:14px;border-bottom:2px solid rgba(38,34,74,.15)}
+#s-p1-res1 .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative}
+#s-p1-res1 .col i{display:block;width:100%;height:0;border-radius:12px 12px 4px 4px;background:#D9D6E4;transition:height 1.2s var(--ease);transition-delay:calc(var(--base,0ms) + var(--d)*60ms)}
+#s-p1-res1 .col.pk i{background:linear-gradient(180deg,#6A8DFF,var(--pa-blue))}
+#s-p1-res1 .col.in i{height:var(--h)}
+#s-p1-res1 .col .v{position:absolute;font-size:28px;font-weight:700;color:var(--pa-blue);opacity:0;transition:opacity .5s;transition-delay:calc(var(--base,0ms) + var(--d)*60ms + .9s);bottom:calc(var(--h) + 12px)}
+#s-p1-res1 .col.in .v{opacity:1}
+#s-p1-res1 .col .dl{position:absolute;bottom:-44px;font-size:20px;color:var(--mute);font-weight:600;white-space:nowrap}
+#s-p1-res1 .note{position:absolute;right:130px;top:130px;text-align:right;font-size:30px;font-weight:700}
+#s-p1-res1 .note small{display:block;font-size:22px;color:var(--mute);font-weight:500;margin-top:6px}
+#s-p1-res2 .fn{margin-top:70px;display:flex;flex-direction:column;gap:30px}
+#s-p1-res2 .fr{display:grid;grid-template-columns:200px 1fr;align-items:center;gap:30px}
+#s-p1-res2 .fr .num{font-size:84px;text-align:right}
+#s-p1-res2 .fr .bar{height:120px;border-radius:26px;background:rgba(38,34,74,.07);position:relative;overflow:hidden}
+#s-p1-res2 .fr .bar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:26px;background:#CBD3EE;transition:width 1.4s var(--ease);transition-delay:calc(var(--base,0ms) + var(--d)*90ms)}
+#s-p1-res2 .fr.in .bar i{width:var(--w)}
+#s-p1-res2 .fr .bar span{position:absolute;left:34px;top:50%;transform:translateY(-50%);font-size:32px;font-weight:700;z-index:1}
+#s-p1-res2 .fr.last .bar i{background:linear-gradient(90deg,var(--pa-blue),#6A8DFF)}
+#s-p1-res2 .fr.last .bar span{color:#fff}
+#s-p1-res2 .fr.last .num{color:var(--pa-blue)}
+#s-p1-res3 .donut{position:absolute;left:150px;top:250px;width:640px;height:640px}
+#s-p1-res3 .donut circle.s{fill:none;stroke-width:96;stroke-dasharray:0 9999;transition:stroke-dasharray 1.6s var(--ease)}
+#s-p1-res3 .donut .ctr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#s-p1-res3 .donut .ctr .num{font-size:150px;color:var(--pa-blue);line-height:.9}
+#s-p1-res3 .donut .ctr>span{font-size:30px;font-weight:600;color:var(--mute);margin-top:8px}
+#s-p1-res3 .leg{position:absolute;left:960px;top:330px;display:flex;flex-direction:column;gap:46px}
+#s-p1-res3 .leg div{display:grid;grid-template-columns:34px 180px 1fr;align-items:center;gap:22px}
+#s-p1-res3 .leg i{width:34px;height:34px;border-radius:10px}
+#s-p1-res3 .leg .num{font-size:80px;line-height:1}
+#s-p1-res3 .leg span{font-size:32px;font-weight:600;line-height:1.2}
+#s-p1-res4 .pos{margin-top:70px;display:flex;flex-direction:column;gap:30px;width:1660px}
+#s-p1-res4 .ps{display:grid;grid-template-columns:520px 1fr 120px;align-items:center;gap:30px}
+#s-p1-res4 .ps .t{font-size:32px;font-weight:600}
+#s-p1-res4 .ps .pp{display:flex;flex-wrap:wrap;gap:5px}
+#s-p1-res4 .ps .pp svg{width:22px;height:22px;color:#DAD7E5;transition:color .4s;transition-delay:calc(var(--base,0ms) + var(--d)*90ms + var(--i)*8ms)}
+#s-p1-res4 .ps.in .pp svg{color:var(--c,var(--pa-blue))}
+#s-p1-res4 .ps .num{font-size:52px;text-align:right}
+#s-p1-res5 .q{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:34px;margin-top:70px}
+#s-p1-res5 .q>div{height:600px;padding:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#s-p1-res5 .gauge{position:relative;width:380px;height:380px}
+#s-p1-res5 .gauge circle.v{stroke-dasharray:0 1100;transition:stroke-dasharray 2s var(--ease) calc(var(--base,0ms) + .4s)}
+#s-p1-res5 .in .gauge circle.v{stroke-dasharray:var(--a) 1100}
+#s-p1-res5 .gauge .ctr{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+#s-p1-res5 .big{font-size:110px;line-height:1}
+#s-p1-res5 .gauge .big{font-size:86px;letter-spacing:-.03em}
+#s-p1-res5 .gauge .big small{font-size:.5em;margin-left:4px;vertical-align:.55em}
+#s-p1-res5 .days{width:100%;display:flex;flex-direction:column;gap:12px;margin-top:30px}
+#s-p1-res5 .days div{display:grid;grid-template-columns:150px 1fr 60px;align-items:center;gap:14px;font-size:22px;font-weight:600;color:var(--mute);text-align:left}
+#s-p1-res5 .days i{display:block;height:22px;border-radius:11px;background:#EDEDF1;position:relative;overflow:hidden}
+#s-p1-res5 .days i:after{content:'';position:absolute;left:0;top:0;bottom:0;width:0;border-radius:11px;background:var(--pa-blue);transition:width 1.2s var(--ease)}
+#s-p1-res5 .in .days i:after{width:var(--w);transition-delay:calc(var(--base,0ms) + 1s + var(--k)*.25s)}
+#s-p1-res5 .days b{font-size:24px;color:var(--ink);text-align:right}
+#s-p1-res5 .lbl{font-size:30px;font-weight:600;margin-top:24px;line-height:1.3;color:var(--ink2)}
+#s-p1-res5 .medals{display:grid;grid-template-columns:repeat(18,18px);gap:5px;margin:10px 0 30px}
+#s-p1-res5 .medals i{width:18px;height:18px;border-radius:50%;background:#E8E8ED;transition:background .4s;transition-delay:calc(var(--base,0ms) + 600ms + var(--i)*12ms)}
+#s-p1-res5 .in .medals i.h{background:var(--pa-sun)}
+#s-p1-res5 .in .medals i.c{background:#C7CEE6}
+#s-p1-res5 .sub2{font-size:26px;color:var(--mute);font-weight:600;margin-top:10px}
+
+#s-p1-next .courses{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:60px}
+#s-p1-next .co{border:3px solid var(--pa-ink);border-radius:36px;padding:44px 48px;box-shadow:9px 9px 0 var(--pa-ink);height:660px;position:relative;overflow:hidden;font-family:var(--f-r);color:var(--pa-ink)}
+#s-p1-next .co .soon{position:absolute;right:34px;top:36px;padding:8px 20px;border-radius:999px;border:2.5px solid var(--pa-ink);background:#fff;font-size:22px;font-weight:800}
+#s-p1-next .co .lg{width:96px;height:96px;border-radius:28px;display:grid;place-items:center;font-size:52px;color:#fff;border:3px solid var(--pa-ink);box-shadow:5px 5px 0 var(--pa-ink)}
+#s-p1-next .co h3{font-size:56px;font-weight:800;margin-top:34px;letter-spacing:-.02em;line-height:1.05}
+#s-p1-next .co p{font:600 27px/1.35 var(--f);color:#5D5880;margin-top:14px}
+#s-p1-next .co .sk{display:flex;flex-wrap:wrap;gap:14px;margin-top:34px}
+#s-p1-next .co .sk span{display:inline-flex;align-items:center;gap:12px;padding:14px 22px;border-radius:18px;background:#fff;border:2.5px solid var(--pa-ink);font:700 24px var(--f);box-shadow:3px 3px 0 var(--pa-ink)}
+#s-p1-next .co .sk .ico{font-size:28px}
+#s-p1-next .co1{background:#E4F6EC}#s-p1-next .co1 .lg{background:var(--green)}
+#s-p1-next .co2{background:#FFF1D0}#s-p1-next .co2 .lg{background:#E39A12}
+
+/* КР */
+.krs{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:56px}
+.krs.three{grid-template-columns:repeat(3,1fr)}
+.kr{background:#fff;border-radius:30px;box-shadow:var(--shadow);padding:36px 40px;display:grid;grid-template-columns:96px 1fr;gap:28px;align-items:start;min-height:290px}
+.kr .st{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;font-size:52px;color:#fff;transform:scale(0) rotate(-30deg);transition:transform .7s var(--spring);transition-delay:calc(var(--base,0ms) + var(--d)*90ms + .5s)}
+.kr.in .st{transform:none}
+.kr .st.done{background:#1DB954;box-shadow:0 12px 30px -10px rgba(29,185,84,.7)}
+.kr .st.partial{background:conic-gradient(var(--amber) 0 50%,#FBE3B8 50% 100%);box-shadow:0 12px 30px -10px rgba(245,163,26,.7)}
+.kr .st.fail{background:#E5484D;box-shadow:0 12px 30px -10px rgba(229,72,77,.7)}
+.kr .st.todo{background:#fff;border:3px dashed #C7C7CC;color:#A1A1A6;font-size:44px;font-weight:700}
+.kr .k{font-size:22px;font-weight:700;color:var(--acc);letter-spacing:.04em}
+.kr h4{font-size:33px;font-weight:700;letter-spacing:-.02em;line-height:1.2;margin-top:8px}
+.kr p{font-size:24px;color:var(--mute);font-weight:500;line-height:1.4;margin-top:14px}
+.kr.has-note p:after{content:"  · пояснення далі →";color:var(--acc);font-weight:700}
+
+/* пояснення до КР */
+.note-head{display:flex;align-items:center;gap:22px}
+.note-head .st{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:40px;flex:none}
+.note-head .st.partial{background:conic-gradient(var(--amber) 0 50%,#FBE3B8 50% 100%)}
+.note-head .st.fail{background:#E5484D}
+#s-p1-kr1 .doc{position:absolute;left:130px;top:330px;width:500px;height:600px;border-radius:24px;background:#fff;box-shadow:var(--shadow-lg);padding:50px 46px}
+#s-p1-kr1 .doc .ic{font-size:64px;color:var(--pa-blue)}
+#s-p1-kr1 .doc h4{font-size:36px;font-weight:700;margin-top:26px;line-height:1.15}
+#s-p1-kr1 .doc i{display:block;height:12px;border-radius:6px;background:#ECECF2;margin-top:18px}
+#s-p1-kr1 .doc i:nth-of-type(3n){width:70%}
+#s-p1-kr1 .doc .nost{position:absolute;left:40px;right:40px;bottom:40px;padding:14px 20px;border:4px dashed var(--amber);color:#B76E00;border-radius:14px;font-size:23px;font-weight:800;transform:rotate(-3deg);text-align:center}
+#s-p1-kr1 svg.fly{position:absolute;inset:0;width:1920px;height:1080px;pointer-events:none}
+#s-p1-kr1 .fly path{fill:none;stroke:var(--pa-blue);stroke-width:4;stroke-dasharray:10 11;animation:flow 1s linear infinite}
+#s-p1-kr1 .to{position:absolute;left:1010px;width:780px;display:flex;align-items:center;gap:26px;padding:28px 34px;border-radius:28px;background:#fff;box-shadow:var(--shadow)}
+#s-p1-kr1 .to .ic{width:86px;height:86px;border-radius:24px;background:#EEF2FF;color:var(--pa-blue);display:grid;place-items:center;font-size:46px;flex:none}
+#s-p1-kr1 .to b{font-size:34px;letter-spacing:-.02em;display:block}
+#s-p1-kr1 .to span{font-size:24px;color:var(--mute);font-weight:500}
+#s-p1-kr1 .why{position:absolute;left:130px;right:130px;bottom:56px;font-size:27px;font-weight:600;color:var(--ink2);line-height:1.4}
+
+/* =====================================================================
+   ПРОЯВ
+   ===================================================================== */
+#s-p3-open{padding:0;background:#F6F8FC;color:#0B0D12;--fm:"JetBrains Mono",var(--f-m);--fs:"Manrope",var(--f)}
+#s-p3-open video{position:absolute;top:0;left:360px;width:1920px;height:1080px;object-fit:cover;filter:invert(1) hue-rotate(180deg) saturate(1.5) contrast(1.05);mix-blend-mode:multiply;opacity:0;transition:opacity 2.4s ease}
+#s-p3-open.active video{opacity:1}
+#s-p3-open .scrim{position:absolute;inset:0;background:linear-gradient(100deg,rgba(246,248,252,.97) 0%,rgba(246,248,252,.85) 32%,rgba(246,248,252,0) 58%),radial-gradient(900px 600px at 78% 45%,rgba(61,107,255,.10),transparent 70%)}
+#s-p3-open .vign{position:absolute;inset:0;background:linear-gradient(rgba(61,107,255,.06) 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,rgba(61,107,255,.06) 1px,transparent 1px) 0 0/40px 40px;-webkit-mask-image:radial-gradient(ellipse 60% 70% at 72% 50%,#000,transparent);mask-image:radial-gradient(ellipse 60% 70% at 72% 50%,#000,transparent)}
+#s-p3-open .gl{position:absolute;background:rgba(11,13,18,.08)}
+#s-p3-open .gl.v{top:0;bottom:0;width:1px;transform:scaleY(0);transform-origin:top}
+#s-p3-open .gl.h{left:0;right:0;height:1px;transform:scaleX(0);transform-origin:left}
+#s-p3-open.active .gl{transform:none;transition:transform 1.6s var(--ease) calc(var(--base,0ms) + var(--d)*100ms)}
+#s-p3-open .plus{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;opacity:0}
+#s-p3-open .plus:before,#s-p3-open .plus:after{content:"";position:absolute;background:rgba(11,13,18,.35)}
+#s-p3-open .plus:before{left:8px;top:0;width:2px;height:18px}#s-p3-open .plus:after{top:8px;left:0;height:2px;width:18px}
+#s-p3-open.active .plus{opacity:1;transition:opacity .6s calc(var(--base,0ms) + var(--d)*100ms)}
+#s-p3-open .brand{position:absolute;left:130px;top:96px;display:flex;align-items:center;gap:16px;font:700 26px var(--f-pv);letter-spacing:.02em}
+#s-p3-open .brand span{font:500 20px var(--fm);color:#5E6673;margin-left:18px;letter-spacing:.04em}
+#s-p3-open h1{position:absolute;left:122px;top:320px;font:800 200px/0.9 var(--f-pv);letter-spacing:-.02em;white-space:nowrap;filter:drop-shadow(0 20px 40px rgba(61,107,255,.18))}
+#s-p3-open h1 .l{display:inline-block;background:linear-gradient(180deg,#0B0D12 40%,#3D6BFF);-webkit-background-clip:text;background-clip:text;color:transparent;opacity:0;transform:translateY(.22em) scale(.97);filter:blur(18px)}
+#s-p3-open.active h1 .l{animation:pvlin 1.4s var(--ease) forwards;animation-delay:calc(var(--base,0ms) + 300ms + var(--i)*110ms)}
+@keyframes pvlin{60%{filter:blur(0)}to{opacity:1;transform:none;filter:blur(0)}}
+#s-p3-open .ptag{position:absolute;left:130px;top:600px;font:700 58px/1.12 var(--f-pv);letter-spacing:-.01em}
+#s-p3-open .ptag em{font-style:normal;color:var(--pv)}
+#s-p3-open .hud b{display:block;font:600 22px var(--fm);color:#0B0D12;letter-spacing:.06em}
+#s-p3-open .hud{position:absolute}
+#s-p3-open .hud small{display:block;font:500 18px/1.45 var(--fs);color:#5E6673;margin-top:8px;width:300px}
+#s-p3-open .box{position:absolute;width:150px;height:150px;border:1.5px solid rgba(11,13,18,.55);opacity:0;transform:scale(1.6)}
+#s-p3-open .box:before,#s-p3-open .box:after{content:"";position:absolute;width:20px;height:20px;border:3px solid var(--pv)}
+#s-p3-open .box:before{left:-3px;top:-3px;border-right:0;border-bottom:0}#s-p3-open .box:after{right:-3px;bottom:-3px;border-left:0;border-top:0}
+#s-p3-open.active .box{opacity:1;transform:none;transition:opacity .7s,transform 1.1s var(--ease);transition-delay:calc(var(--base,0ms) + var(--d)*100ms)}
+#s-p3-open svg.wires{position:absolute;inset:0;width:1920px;height:1080px;pointer-events:none}
+#s-p3-open .wires path{fill:none;stroke:rgba(11,13,18,.35);stroke-width:1.5;stroke-dasharray:600;stroke-dashoffset:600}
+#s-p3-open.active .wires path{stroke-dashoffset:0;transition:stroke-dashoffset 1.2s var(--ease) calc(var(--base,0ms) + var(--d)*100ms)}
+#s-p3-open .foot2{position:absolute;left:130px;bottom:90px;display:flex;align-items:center;gap:22px}
+#s-p3-open .purl{position:relative;padding:20px 36px;border-radius:999px;font:600 28px var(--fm);color:#0B0D12;background:#fff;isolation:isolate;box-shadow:0 18px 40px -18px rgba(61,107,255,.5)}
+#s-p3-open .purl:before{content:"";position:absolute;inset:-2px;border-radius:999px;z-index:-1;background:conic-gradient(from var(--pva),#3D6BFF,#9FB3FF,#E6ECFF,#3D6BFF 40%,#C9D5FF 60%,#3D6BFF);animation:pvspin 4s linear infinite}
+#s-p3-open .purl:after{content:"";position:absolute;inset:1px;border-radius:999px;z-index:-1;background:#fff}
+@property --pva{syntax:"<angle>";inherits:false;initial-value:0deg}
+@keyframes pvspin{to{--pva:360deg}}
+#s-p3-open .live{display:flex;align-items:center;gap:12px;font:500 20px var(--fm);color:#5E6673;letter-spacing:.05em}
+#s-p3-open .live i{width:10px;height:10px;border-radius:50%;background:#1DB954;box-shadow:0 0 10px rgba(29,185,84,.6);animation:pvblink 1.6s infinite}
+@keyframes pvblink{50%{opacity:.3}}
+
+#s-p3-prob .flow{position:absolute;left:130px;right:130px;top:330px;height:520px}
+#s-p3-prob .who{position:absolute;left:0;top:90px;width:360px}
+#s-p3-prob .who .av{width:120px;height:120px;border-radius:50%;background:#fff;box-shadow:var(--shadow);display:grid;place-items:center;font-size:64px;color:var(--ink2)}
+#s-p3-prob .who .bub{margin-top:28px;padding:24px 28px;border-radius:8px 28px 28px 28px;background:var(--pv);color:#fff;font-size:28px;font-weight:600;line-height:1.3;box-shadow:0 20px 50px -20px rgba(61,107,255,.7)}
+#s-p3-prob .srv{position:absolute;left:530px;width:700px;display:flex;align-items:center;gap:24px;padding:22px 26px;border-radius:26px;background:#fff;box-shadow:var(--shadow)}
+#s-p3-prob .srv .gi{width:70px;height:70px;border-radius:20px;background:#EEF2FF;color:var(--pv);display:grid;place-items:center;font-size:38px;flex:none}
+#s-p3-prob .srv b{display:block;font-size:32px;letter-spacing:-.02em}
+#s-p3-prob .srv span{font-size:23px;color:var(--mute);font-weight:500}
+#s-p3-prob .srv .x{margin-left:auto;width:50px;height:50px;border-radius:50%;background:#FDE2DC;color:var(--red);display:grid;place-items:center;font-size:28px;flex:none}
+#s-p3-prob svg.ln{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+#s-p3-prob .ln path{fill:none;stroke:#C7CEE6;stroke-width:3;stroke-dasharray:8 10}
+#s-p3-prob .res{position:absolute;left:1340px;top:110px;width:320px;text-align:center}
+#s-p3-prob .res .ic{width:150px;height:150px;margin:0 auto;border-radius:44px;background:#fff;box-shadow:var(--shadow-lg);display:grid;place-items:center;font-size:80px;color:var(--red)}
+#s-p3-prob .res b{display:block;font-size:34px;margin-top:24px;letter-spacing:-.02em;line-height:1.15}
+#s-p3-prob .res span{display:block;font-size:24px;color:var(--mute);margin-top:8px;font-weight:500}
+
+#s-p3-usb svg.sc{position:absolute;left:0;top:0;width:1920px;height:1080px}
+#s-p3-usb .flowp{stroke-dasharray:10 11;animation:flow 1.1s linear infinite}
+#s-p3-usb .dev{position:absolute;left:130px;top:360px;width:420px;height:400px;border-radius:36px;background:#fff;box-shadow:var(--shadow-lg);padding:40px;display:flex;flex-direction:column}
+#s-p3-usb .dev .gi{width:96px;height:96px;border-radius:28px;background:#111;color:#fff;display:grid;place-items:center;font-size:52px}
+#s-p3-usb .dev b{font-size:40px;margin-top:auto;letter-spacing:-.02em}
+#s-p3-usb .dev span{font-size:24px;color:var(--mute);margin-top:8px;font-weight:500}
+#s-p3-usb .plug{position:absolute;left:640px;top:500px;width:300px;height:120px;border-radius:28px;background:var(--pv-dark);color:#fff;display:flex;align-items:center;justify-content:center;gap:16px;font:800 40px var(--f-pv);box-shadow:0 30px 70px -20px rgba(61,107,255,.8)}
+#s-p3-usb .plug i{width:16px;height:16px;border-radius:50%;background:var(--pv);box-shadow:0 0 16px var(--pv)}
+#s-p3-usb .reg{position:absolute;left:1330px;width:460px;display:flex;align-items:center;gap:22px;padding:26px 30px;border-radius:26px;background:#fff;box-shadow:var(--shadow)}
+#s-p3-usb .reg .gi{width:70px;height:70px;border-radius:20px;background:#EEF2FF;color:var(--pv);display:grid;place-items:center;font-size:38px}
+#s-p3-usb .reg b{font-size:34px;display:block;letter-spacing:-.02em}
+#s-p3-usb .reg span{font-size:22px;color:var(--mute);font-weight:500}
+#s-p3-usb .q{position:absolute;left:150px;top:270px;padding:18px 26px;border-radius:8px 26px 26px 26px;background:var(--pv);color:#fff;font-size:26px;font-weight:600;box-shadow:0 20px 50px -20px rgba(61,107,255,.7)}
+#s-p3-usb .out{position:absolute;left:140px;top:810px;display:flex;gap:16px}
+#s-p3-usb .out span{display:flex;align-items:center;gap:12px;padding:16px 24px;border-radius:18px;background:#fff;box-shadow:var(--shadow);font-size:26px;font-weight:700}
+#s-p3-usb .out .ico{color:var(--pv);font-size:30px}
+
+#s-p3-conn .code{position:absolute;left:130px;top:300px;width:1120px;min-height:470px;padding:42px 48px;border-radius:28px;background:var(--pv-dark);font:400 25px/1.7 var(--f-m);color:#c7d2ff;white-space:pre;box-shadow:0 40px 100px -30px rgba(7,8,11,.7)}
+#s-p3-conn .code .k{color:#8ab4ff}#s-p3-conn .code .s{color:#9ef0c9}
+.caret{display:inline-block;width:14px;height:30px;background:var(--cyan);vertical-align:-5px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+#s-p3-conn .no{position:absolute;left:1360px;top:310px;display:flex;flex-direction:column;gap:36px}
+#s-p3-conn .no div{font-size:48px;font-weight:700;letter-spacing:-.03em;position:relative;width:max-content;color:var(--ink2)}
+#s-p3-conn .no div:after{content:"";position:absolute;left:-10px;right:-10px;top:54%;height:6px;border-radius:3px;background:var(--red);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease);transition-delay:calc(var(--base,0ms) + var(--d)*90ms + .5s)}
+#s-p3-conn .no div.in:after{transform:scaleX(1)}
+#s-p3-conn .time{position:absolute;left:1360px;top:720px;display:flex;align-items:center;gap:20px;font-size:40px;font-weight:700}
+#s-p3-conn .time i{width:76px;height:76px;border-radius:50%;background:var(--pv);color:#fff;display:grid;place-items:center;font-size:40px;font-style:normal}
+
+.gpt{position:absolute;left:110px;right:110px;top:110px;bottom:80px;border-radius:26px;background:#fff;box-shadow:var(--shadow-lg);display:grid;grid-template-columns:300px 1fr;overflow:hidden}
+.gpt aside{background:#F9F9F9;border-right:1px solid var(--line);padding:26px 18px;display:flex;flex-direction:column;gap:6px;font-size:18px;color:var(--ink2)}
+.gpt aside .nw{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;font-weight:600}
+.gpt aside .nw i{width:30px;height:30px;border-radius:50%;background:#000;display:grid;place-items:center;color:#fff;font-size:16px;font-style:normal}
+.gpt aside .h{font-size:14px;color:var(--dim);font-weight:600;margin:20px 14px 6px}
+.gpt aside .it{padding:10px 14px;border-radius:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gpt aside .it.on{background:#ECECEC}
+.gpt aside .conn{margin-top:auto;padding:14px;border-radius:14px;background:#EEF2FF;color:#2443B8;font-size:16px;font-weight:600;line-height:1.4}
+.gpt aside .conn b{display:block;font-family:var(--f-pv);font-size:15px;margin-bottom:4px}
+.gpt main{position:relative;display:flex;flex-direction:column;overflow:hidden}
+.gpt header{height:68px;display:flex;align-items:center;gap:10px;padding:0 30px;font-size:22px;font-weight:600}
+.gpt header span{color:var(--dim);font-size:18px}
+.gpt .thread{flex:1;padding:6px 120px 0;display:flex;flex-direction:column;gap:22px;transition:transform 1s var(--ease)}
+.gpt .u{align-self:flex-end;max-width:760px;padding:18px 24px;border-radius:26px;background:#F4F4F4;font-size:24px;line-height:1.45;min-height:70px}
+.gpt .tools{display:flex;flex-direction:column;gap:10px}
+.gpt .tool{display:flex;align-items:center;gap:14px;font-size:19px;color:var(--mute);font-weight:500}
+.gpt .tool code{font:500 17px var(--f-m);color:#2443B8;background:#EEF2FF;padding:4px 10px;border-radius:8px}
+.gpt .tool .stt{position:relative;width:24px;height:24px;flex:none}
+.gpt .tool .sp{position:absolute;inset:0;border-radius:50%;border:3px solid #D2D2D7;border-top-color:var(--pv);animation:rot .8s linear infinite}
+.gpt .tool .ok{position:absolute;inset:0;border-radius:50%;background:#1DB954;color:#fff;font-size:14px;display:grid;place-items:center;opacity:0;transform:scale(.4)}
+.gpt .tool.in .sp{opacity:0;transition:opacity .2s calc(var(--base,0ms) + var(--d)*90ms + var(--t))}
+.gpt .tool.in .ok{opacity:1;transform:none;transition:opacity .3s,transform .4s var(--spring);transition-delay:calc(var(--base,0ms) + var(--d)*90ms + var(--t))}
+@keyframes rot{to{transform:rotate(360deg)}}
+.gpt .tool .ms{font:500 16px var(--f-m);color:var(--dim)}
+.gpt .a{font-size:23px;line-height:1.55}
+.gpt .a table{border-collapse:collapse;margin:14px 0 4px;font-size:21px;min-width:640px}
+.gpt .a th{text-align:left;font-weight:600;padding:10px 18px;border-bottom:1.5px solid var(--line2);color:var(--ink2)}
+.gpt .a td{padding:10px 18px;border-bottom:1px solid var(--line)}
+.gpt .a td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.gpt .a tr{opacity:0;transition:opacity .5s;transition-delay:calc(var(--base,0ms) + var(--r)*250ms + 1.2s)}
+.gpt .a.in tr{opacity:1}
+.gpt .bars{display:flex;flex-direction:column;gap:16px;padding:20px 26px;border-radius:18px;border:1px solid var(--line);width:760px}
+.gpt .bars .bt{display:flex;justify-content:space-between;font-size:19px;font-weight:600;margin-bottom:6px}
+.gpt .bars .tr{height:34px;border-radius:9px;background:#F2F2F4;overflow:hidden}
+.gpt .bars .tr i{display:block;height:100%;width:0;border-radius:9px;background:#B9B9C0;transition:width 1.3s var(--ease);transition-delay:calc(var(--base,0ms) + var(--d)*90ms)}
+.gpt .bars.in .tr i{width:var(--w)}
+.gpt .bars .me .tr i{background:var(--pv)}
+.gpt .bars .note{font-size:20px;color:var(--ink2);margin-top:4px}
+.gpt .bars .note b{color:#B76E00}
+.gpt .composer{margin:18px 120px 26px;height:66px;border-radius:33px;border:1px solid var(--line2);display:flex;align-items:center;padding:0 12px 0 28px;font-size:20px;color:var(--dim);box-shadow:0 4px 18px -8px rgba(0,0,0,.15)}
+.gpt .composer span{margin-left:auto;width:44px;height:44px;border-radius:50%;background:#000;color:#fff;display:grid;place-items:center;font-size:22px}
+
+#s-p3-thr .wall{position:absolute;left:130px;top:300px;width:1100px;height:620px}
+#s-p3-thr .brick{position:absolute;left:var(--x);bottom:var(--y);width:340px;height:110px;border-radius:20px;background:#fff;box-shadow:var(--shadow);display:flex;align-items:center;gap:18px;padding:0 26px;font-size:28px;font-weight:700;transition:transform 1s var(--ease),opacity .6s;transition-delay:var(--fd,0ms)}
+#s-p3-thr .brick .ico{font-size:36px;color:var(--mute)}
+#s-p3-thr .wall.down .brick{transform:translateY(calc(var(--y) + 40px)) rotate(var(--rr));opacity:0}
+#s-p3-thr .stepq{position:absolute;left:130px;top:560px;width:1100px;height:150px;border-radius:30px;background:var(--pv);color:#fff;display:flex;align-items:center;gap:24px;padding:0 44px;font-size:42px;font-weight:700;letter-spacing:-.02em;box-shadow:0 30px 70px -24px rgba(61,107,255,.8)}
+#s-p3-thr .stepq .ico{font-size:58px}
+#s-p3-thr .who{position:absolute;left:1330px;top:300px;display:flex;flex-direction:column;gap:22px}
+#s-p3-thr .who div{display:flex;align-items:center;gap:20px;font-size:32px;font-weight:700;padding:20px 30px;border-radius:24px;background:#fff;box-shadow:var(--shadow)}
+#s-p3-thr .who .ico{font-size:38px;color:var(--pv)}
+
+#s-p3-econ .mapbox{position:absolute;left:110px;top:120px;height:900px;width:638px}
+#s-p3-econ .map{width:100%;height:100%}
+#s-p3-econ .mapbox.in .map .h{fill:color-mix(in srgb,var(--pv) calc(25% + var(--t) * 75%),#E6ECFF)}
+#s-p3-econ .side{position:absolute;left:840px;right:110px;top:110px}
+#s-p3-econ .stats{display:flex;gap:26px;margin-top:40px}
+#s-p3-econ .stats div{flex:1;padding:28px 30px;border-radius:26px;background:#fff;box-shadow:var(--shadow)}
+#s-p3-econ .stats .num{font-size:76px;line-height:1;color:var(--pv)}
+#s-p3-econ .stats span{display:block;font-size:24px;font-weight:600;margin-top:10px;color:var(--ink2)}
+#s-p3-econ .weeks{margin-top:46px;padding:34px 36px;border-radius:28px;background:#fff;box-shadow:var(--shadow)}
+#s-p3-econ .weeks h5{font-size:24px;color:var(--mute);font-weight:600;margin-bottom:20px}
+#s-p3-econ .cal{display:grid;grid-template-columns:repeat(10,1fr);gap:10px}
+#s-p3-econ .cal i{height:44px;border-radius:10px;background:#D2D2D7;transition:background .4s,opacity .5s,transform .5s;transition-delay:calc(var(--base,0ms) + var(--i)*45ms)}
+#s-p3-econ .weeks.in .cal i{background:#F2C2B8}
+#s-p3-econ .weeks.done .cal i{opacity:.25;transform:scale(.8);transition-delay:calc(var(--i)*25ms)}
+#s-p3-econ .weeks.done .cal i.k{opacity:1;transform:none;background:var(--pv)}
+#s-p3-econ .wl{display:flex;justify-content:space-between;margin-top:20px;font-size:30px;font-weight:700}
+#s-p3-econ .wl .now{color:var(--pv);opacity:0;transition:opacity .6s .9s}
+#s-p3-econ .weeks.done .wl .now{opacity:1}
+#s-p3-econ .wl .was{color:var(--red)}
+#s-p3-econ .loop{margin-top:36px;display:flex;align-items:center;gap:26px;padding:28px 34px;border-radius:28px;background:var(--pv-dark);color:#fff}
+#s-p3-econ .loop .ico{font-size:60px;color:#9fb3ff;animation:spin2 6s linear infinite;flex:none}
+@keyframes spin2{to{transform:rotate(360deg)}}
+#s-p3-econ .loop p{font-size:28px;font-weight:600;line-height:1.35}
+
+/* =====================================================================
+   Відкриті дані
+   ===================================================================== */
+#s-p4-open{padding:0}
+#s-p4-open .open{background:radial-gradient(rgba(14,159,110,.14) 1.6px,transparent 1.8px) 0 0/34px 34px,#fff}
+#s-p4-open .left{position:absolute;left:130px;top:200px;width:900px}
+#s-p4-open h1{font-size:150px;font-weight:800;letter-spacing:-.055em;line-height:.93;color:var(--od);margin-top:30px}
+#s-p4-open .cap{margin-top:34px;max-width:820px}
+#s-p4-open .ds{display:flex;flex-direction:column;gap:14px;margin-top:50px;width:640px}
+#s-p4-open .ds div{display:flex;align-items:center;gap:18px;padding:16px 22px;border-radius:18px;background:#fff;box-shadow:var(--shadow);font-size:22px;font-weight:600}
+#s-p4-open .ds div b{padding:4px 10px;border-radius:8px;background:var(--od-tint);color:#06603F;font:700 16px var(--f-m)}
+#s-p4-open .mapbox{position:absolute;right:120px;top:70px;height:940px;width:666px}
+#s-p4-open .map{width:100%;height:100%}
+#s-p4-open .map .h{fill:#E3F6EE}
+#s-p4-open .mapbox.in .map .h{fill:color-mix(in srgb,var(--od) calc(18% + var(--t) * 62%),#E3F6EE)}
+
+#s-p4-sem .row{display:grid;grid-template-columns:repeat(5,1fr);gap:28px;margin-top:80px}
+#s-p4-sem .sm{height:380px;border-radius:30px;background:#fff;box-shadow:var(--shadow);padding:34px;display:flex;flex-direction:column}
+#s-p4-sem .sm .n{width:74px;height:74px;border-radius:22px;background:var(--od);color:#fff;display:grid;place-items:center;font-size:36px;font-weight:800}
+#s-p4-sem .sm b{margin-top:56px;font-size:44px;letter-spacing:-.03em;color:var(--od)}
+#s-p4-sem .sm span{font-size:23px;color:var(--ink2);margin-top:10px;font-weight:600;line-height:1.3}
+#s-p4-sem .tot{margin-top:56px;display:flex;align-items:center;gap:30px;padding:34px 44px;border-radius:30px;background:var(--od);color:#fff}
+#s-p4-sem .tot .num{font-size:96px;line-height:1}
+#s-p4-sem .tot span{font-size:32px;font-weight:600;line-height:1.3}
+
+#s-p4-ds .goal{position:absolute;left:130px;top:300px;width:1660px}
+#s-p4-ds .goal .track{height:64px;border-radius:20px;background:#E3F1EA;position:relative}
+#s-p4-ds .goal .fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:20px;background:linear-gradient(90deg,var(--od),#34C38F);transition:width 1.8s var(--ease) calc(var(--base,0ms) + .3s)}
+#s-p4-ds .goal.in .fill{width:100%}
+#s-p4-ds .goal .mark{position:absolute;left:55.56%;top:-14px;bottom:-14px;width:4px;border-radius:2px;background:var(--ink)}
+#s-p4-ds .goal .mark span{position:absolute;left:12px;top:-34px;font-size:22px;font-weight:700;white-space:nowrap}
+#s-p4-ds .goal .lab{display:flex;justify-content:space-between;margin-top:18px;font-size:26px;font-weight:700}
+#s-p4-ds .goal .lab b{color:var(--od);font-size:44px}
+#s-p4-ds .grid{position:absolute;left:130px;top:480px;width:1660px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+#s-p4-ds .dc{height:140px;border-radius:22px;background:#fff;box-shadow:var(--shadow);padding:20px 24px;display:flex;flex-direction:column;justify-content:space-between}
+#s-p4-ds .dc .d{display:flex;align-items:center;gap:10px;font:600 17px var(--f-m);color:var(--mute)}
+#s-p4-ds .dc .d i{width:30px;height:30px;border-radius:9px;background:var(--od-tint);color:var(--od);display:grid;place-items:center;font-size:18px;font-style:normal}
+#s-p4-ds .dc b{font-size:22px;line-height:1.25;letter-spacing:-.01em}
+#s-p4-ds .dc.more{background:var(--od);color:#fff;justify-content:center}
+#s-p4-ds .dc.more b{font-size:25px}
+
+#s-p4-kr3 .mapbox,#s-p4-kr4 .mapbox{position:absolute;left:110px;top:120px;height:900px;width:638px}
+#s-p4-kr3 .map,#s-p4-kr4 .map{width:100%;height:100%}
+#s-p4-kr3 .map .h,#s-p4-kr4 .map .h{fill:#E2E6E4}
+#s-p4-kr3 .mapbox.in .map .h.on,#s-p4-kr4 .mapbox.in .map .h.on{fill:var(--od);transition-delay:calc(var(--base,0ms) + 900ms + var(--k) * 110ms)}
+.leg-od{display:inline-flex;align-items:center;gap:14px}
+.leg-od i{width:26px;height:26px;border-radius:8px;background:var(--od);flex:none}
+#s-p4-kr3 .side,#s-p4-kr4 .side{position:absolute;left:840px;right:110px;top:110px}
+#s-p4-kr3 .steps{margin-top:44px;display:flex;flex-direction:column;gap:20px}
+#s-p4-kr3 .steps div{display:flex;align-items:center;gap:22px;padding:24px 30px;border-radius:24px;background:#fff;box-shadow:var(--shadow);font-size:28px;font-weight:600}
+#s-p4-kr3 .steps .ico{font-size:38px;color:var(--od);flex:none}
+#s-p4-kr3 .steps .x .ico{color:var(--red)}
+#s-p4-kr3 .cmp,#s-p4-kr4 .cmp{margin-top:56px;display:flex;flex-direction:column;gap:28px}
+#s-p4-kr3 .cmp .t,#s-p4-kr4 .cmp .t{display:flex;justify-content:space-between;font-size:28px;font-weight:700;margin-bottom:12px}
+#s-p4-kr3 .cmp .tr,#s-p4-kr4 .cmp .tr{height:70px;border-radius:20px;background:#ECECF0;overflow:hidden}
+#s-p4-kr3 .cmp .tr i,#s-p4-kr4 .cmp .tr i{display:block;height:100%;width:0;border-radius:20px;transition:width 1.4s var(--ease);transition-delay:calc(var(--base,0ms) + var(--d)*90ms)}
+#s-p4-kr3 .cmp .in .tr i,#s-p4-kr4 .cmp .in .tr i{width:var(--w)}
+#s-p4-kr3 .src,#s-p4-kr4 .src{margin-top:40px;font-size:24px;color:var(--mute);font-weight:500}
+
+/* =====================================================================
+   Програма
+   ===================================================================== */
+#s-p2-open{padding:0}
+#s-p2-open .open{background:radial-gradient(1000px 700px at 85% 10%,rgba(124,92,255,.18),transparent 60%),var(--pg-tint)}
+#s-p2-open .left{position:absolute;left:130px;top:220px;width:900px}
+#s-p2-open h1{font-size:112px;font-weight:800;letter-spacing:-.05em;line-height:.98;color:var(--pg);margin-top:30px}
+#s-p2-open .cap{margin-top:30px;max-width:820px}
+#s-p2-open .yrs{display:flex;gap:16px;margin-top:50px}
+#s-p2-open .yrs span{padding:16px 30px;border-radius:20px;background:#fff;box-shadow:var(--shadow);font-size:40px;font-weight:700;color:var(--pg)}
+#s-p2-open .cover{position:absolute;right:170px;top:110px;width:620px;height:860px;background:#fff;border-radius:18px;box-shadow:var(--shadow-lg);padding:70px 60px;text-align:center;rotate:2.5deg}
+#s-p2-open .cover img{height:110px;margin:0 auto}
+#s-p2-open .cover .t1{font-size:17px;font-weight:700;letter-spacing:.08em;color:var(--mute);margin-top:30px;line-height:1.5}
+#s-p2-open .cover .t2{font-size:34px;font-weight:800;margin-top:60px;line-height:1.2;letter-spacing:-.02em}
+#s-p2-open .cover .t3{font-size:22px;color:var(--mute);margin-top:20px;font-weight:600}
+#s-p2-open .cover i{display:block;height:10px;border-radius:5px;background:#EEEAFB;margin:16px auto 0;width:80%}
+#s-p2-open .cover .st{position:absolute;left:50%;bottom:90px;transform:translateX(-50%) rotate(-8deg);border:6px solid var(--pg);color:var(--pg);border-radius:16px;padding:12px 26px;font-size:36px;font-weight:800;white-space:nowrap;opacity:0;scale:1.8;transition:opacity .4s,scale .5s var(--spring);transition-delay:calc(var(--base,0ms) + 1.4s)}
+#s-p2-open .cover.in .st{opacity:1;scale:1}
+#s-p2-open .cover .st small{display:block;font-size:17px;letter-spacing:.02em}
+
+#s-p2-path .line{position:absolute;left:230px;right:230px;top:470px;height:8px;border-radius:4px;background:#E2DFF0}
+#s-p2-path .line i{display:block;height:100%;width:var(--p,0%);border-radius:4px;background:var(--pg);transition:width 1.4s var(--ease)}
+#s-p2-path .stg{position:absolute;top:390px;width:330px;transform:translateX(-50%);text-align:center}
+#s-p2-path .stg .c{width:160px;height:160px;margin:0 auto;border-radius:50%;background:#fff;box-shadow:var(--shadow);display:grid;place-items:center;font-size:64px;color:var(--dim);transition:all .7s var(--spring)}
+#s-p2-path .stg.on .c{background:var(--pg);color:#fff;transform:scale(1.06);box-shadow:0 24px 60px -16px rgba(124,92,255,.8)}
+#s-p2-path .stg b{display:block;font-size:32px;font-weight:700;margin-top:26px;color:var(--dim);transition:color .6s}
+#s-p2-path .stg small{display:block;font-size:22px;font-weight:600;color:var(--mute);margin-top:6px;opacity:0;transition:opacity .6s}
+#s-p2-path .stg.on b{color:var(--ink)}
+#s-p2-path .stg.on small{opacity:1}
+#s-p2-path .detail{position:absolute;left:130px;right:130px;top:740px;display:flex;flex-wrap:wrap;justify-content:center;gap:14px}
+#s-p2-path .detail span{padding:14px 24px;border-radius:999px;background:#fff;box-shadow:var(--shadow);font-size:24px;font-weight:600;opacity:0;transform:translateY(16px);transition:all .6s var(--spring);transition-delay:calc(var(--i)*60ms)}
+#s-p2-path .detail.show span{opacity:1;transform:none}
+#s-p2-path .stamp{position:absolute;right:180px;top:150px;padding:18px 30px;border:6px solid var(--pg);border-radius:18px;color:var(--pg);font-size:36px;font-weight:800;transform:rotate(-7deg) scale(1.8);opacity:0;transition:all .5s var(--spring);text-align:center}
+#s-p2-path .stamp small{display:block;font-size:20px;font-weight:700}
+#s-p2-path .stamp.in{transform:rotate(-7deg) scale(1);opacity:1}
+
+#s-p2-gl .dirs{position:absolute;left:130px;top:290px;width:1000px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+#s-p2-gl .dir{height:190px;border-radius:26px;background:#fff;box-shadow:var(--shadow);padding:26px 30px;display:flex;flex-direction:column;position:relative}
+#s-p2-gl .dir .ico{font-size:40px;color:var(--pg)}
+#s-p2-gl .dir b{margin-top:auto;font-size:26px;line-height:1.2;letter-spacing:-.01em}
+#s-p2-gl .dir .n{position:absolute;right:26px;top:24px;font-size:20px;font-weight:700;color:var(--mute)}
+#s-p2-gl .side{position:absolute;left:1190px;right:130px;top:290px;display:flex;flex-direction:column;gap:24px}
+#s-p2-gl .bx{border-radius:28px;background:#fff;box-shadow:var(--shadow);padding:30px 34px}
+#s-p2-gl .bx .num{font-size:80px;line-height:1;color:var(--pg)}
+#s-p2-gl .bx>span{display:block;font-size:26px;font-weight:600;margin-top:8px}
+#s-p2-gl .yb{display:flex;align-items:flex-end;gap:22px;height:220px;margin-top:26px}
+#s-p2-gl .yb div{flex:1;text-align:center;height:100%;display:flex;flex-direction:column;justify-content:flex-end}
+#s-p2-gl .yb i{display:block;height:0;border-radius:14px 14px 4px 4px;background:linear-gradient(180deg,#9D85FF,var(--pg));transition:height 1.3s var(--ease);transition-delay:calc(var(--base,0ms) + var(--d)*90ms)}
+#s-p2-gl .bx.in .yb i{height:var(--h)}
+#s-p2-gl .yb b{display:block;font-size:24px;margin-top:10px}
+#s-p2-gl .yb small{display:block;font-size:20px;color:var(--mute);font-weight:600}
+
+/* фінал */
+#s-thanks .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:40px}
+#s-thanks img{height:120px}
+#s-thanks h1{font-size:220px;font-weight:800;letter-spacing:-.06em}
+#s-thanks .urls{display:flex;gap:26px}
+#s-thanks .urls span{padding:18px 34px;border-radius:999px;background:#fff;box-shadow:var(--shadow);font:600 32px var(--f-m)}
+
+/* доповідач */
+#presenter{display:none;position:fixed;inset:0;background:#fff;color:var(--ink);padding:34px 42px;grid-template-rows:auto 1fr auto;gap:24px}
+body.pres #presenter{display:grid}
+body.pres #stage,body.pres #prog{display:none}
+#presenter .top{display:flex;align-items:center;gap:26px;font-size:20px;color:var(--mute);font-weight:600}
+#presenter .clk{font:700 44px var(--f-m);color:var(--ink)}
+#presenter .tmr{font:700 44px var(--f-m);color:#0071E3;margin-left:auto}
+#presenter button{font:600 18px var(--f);background:#F2F2F4;color:var(--ink);border:0;border-radius:12px;padding:12px 18px;cursor:pointer}
+#presenter .cols{display:grid;grid-template-columns:1.6fr 1fr;gap:26px;min-height:0}
+#presenter .now,#presenter .nxt{border-radius:22px;padding:28px 32px;overflow:auto;background:#F5F5F7}
+#presenter .lbl{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:14px}
+#presenter .scr{font-size:20px;color:#0071E3;margin-bottom:14px;font-weight:600}
+#presenter .now .txt{font-size:34px;line-height:1.45;font-weight:500}
+#presenter .nxt .txt{font-size:24px;line-height:1.45;color:var(--mute)}
+#presenter .bot{font-size:17px;color:var(--dim)}
+</style>
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="6.5" r="4.3" fill="currentColor"/><path d="M3.5 22.5c0-5 3.8-8.6 8.5-8.6s8.5 3.6 8.5 8.6z" fill="currentColor"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  <symbol id="i-cap" viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20V11M11 20V5M17 20v-7M3 20h18"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-slides" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+  <symbol id="i-photo" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></symbol>
+  <symbol id="i-loop" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0114-5.3L20 9"/><path d="M20 4v5h-5"/><path d="M20 12a8 8 0 01-14 5.3L4 15"/><path d="M4 20v-5h5"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v7M14 20h3"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 6l-6 6 6 6M16 6l6 6-6 6"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7" cy="15" r="4"/><path d="M10 12l9-9M16 6l3 3"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.4 11h11l2-8H6.2"/><circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V5l8-3 8 3v16M4 21h16M9 9h1M14 9h1M9 13h1M14 13h1M10 21v-4h4v4"/></symbol>
+  <symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></symbol>
+  <symbol id="i-news" viewBox="0 0 24 24"><path d="M4 4h13v16H6a2 2 0 01-2-2z"/><path d="M17 8h3v10a2 2 0 01-2 2M8 8h5M8 12h5M8 16h3"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10l7-5 7 5v11"/><path d="M10 21v-6h4v6"/></symbol>
+  <symbol id="i-gavel" viewBox="0 0 24 24"><path d="M14 4l6 6M11 7l6 6M8 10l4-4 6 6-4 4zM10 14l-6 6"/></symbol>
+  <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M8 3h8l-1 7h4v4H5v-4h4z"/><path d="M4 20h16"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16z"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h14l-4-4M20 16H6l4 4"/></symbol>
+  <symbol id="i-hour" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"/></symbol>
+  <symbol id="i-award" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M8.5 14L7 22l5-3 5 3-1.5-8"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/><path d="M8 7.5h.01M8 16.5h.01"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></symbol>
+  <symbol id="i-tractor" viewBox="0 0 24 24"><circle cx="7" cy="16" r="4"/><circle cx="18" cy="17" r="3"/><path d="M7 12V5h6l2 7M15 12h5v5"/></symbol>
+  <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/><circle cx="17" cy="9" r="2.8"/><path d="M15.5 14.2c3.3-.6 6 1.8 6 5.3"/></symbol>
+</svg>
+
+<div id="stage">
+
+  <!-- ============================== ТИТУЛ ============================== -->
+  <section class="slide" id="s-hello" data-theme="p0" data-title="Титул">
+    <div class="glow"></div>
+    <div class="left">
+      <img class="logo fx-scale" data-b="0" src="assets/logo.svg" alt="Герб Одеської області">
+      <div class="org" data-b="0" style="--d:1"><b>Одеська обласна державна адміністрація</b>Департамент цифрового розвитку, інформаційної політики та туризму<span class="sec">Сектор цифрового розвитку</span></div>
+      <h1 data-b="0" style="--d:3">Підсумки<br>кварталу</h1>
+      <div class="sub" data-b="0" style="--d:5">Цілі та ключові результати · III квартал 2026</div>
+      <div class="chips">
+        <div class="chip fx-scale" data-b="0" style="--d:8"><i style="background:var(--pa-blue);font-family:var(--f-r);font-weight:800">Ш</i>ПРО.ШІ</div>
+        <div class="chip fx-scale" data-b="0" style="--d:9"><i style="background:#EEF2FF"><svg width="30" height="30" viewBox="0 0 52 52"><circle cx="26" cy="6" r="2.6" fill="#3D6BFF"/><circle cx="16" cy="16" r="2.6" fill="#3D6BFF"/><circle cx="26" cy="16" r="2.6" fill="#3D6BFF"/><circle cx="36" cy="16" r="2.6" fill="#3D6BFF"/><circle cx="6" cy="26" r="2.6" fill="#3D6BFF"/><circle cx="16" cy="26" r="2.6" fill="#3D6BFF"/><circle cx="26" cy="26" r="4" fill="#3D6BFF"/><circle cx="36" cy="26" r="2.6" fill="#3D6BFF"/><circle cx="46" cy="26" r="2.6" fill="#3D6BFF"/><circle cx="16" cy="36" r="2.6" fill="#3D6BFF"/><circle cx="26" cy="36" r="2.6" fill="#3D6BFF"/><circle cx="36" cy="36" r="2.6" fill="#3D6BFF"/><circle cx="26" cy="46" r="2.6" fill="#3D6BFF"/></svg></i>ПРОЯВ</div>
+        <div class="chip fx-scale" data-b="0" style="--d:10"><i style="background:var(--od)"><svg class="ico"><use href="#i-db"/></svg></i>Відкриті дані</div>
+        <div class="chip fx-scale" data-b="0" style="--d:11"><i style="background:var(--pg)"><svg class="ico"><use href="#i-doc"/></svg></i>Програма 2027–2029</div>
+      </div>
+    </div>
+    <div class="mapbox fx-fade" data-b="0" id="helloMap"></div>
+  </section>
+
+  <!-- ============================== ХАБ (огляд) ============================== -->
+  <section class="slide" id="s-overview" data-theme="p0" data-builds="3" data-title="Чотири проєкти">
+    <div class="eyebrow" data-b="0">Про що поговоримо</div>
+    <h2 class="title" data-b="0" style="--d:1">Чотири проєкти кварталу</h2>
+    <div class="ov">
+      <div class="ov-p1 fx-scale" data-b="0" style="--d:3">
+        <span class="okr">ОКР 1</span>
+        <div class="lg">Ш</div>
+        <div class="chips">
+          <div class="chip"><b style="background:var(--green)">✓</b>Відкриті дані</div>
+          <div class="chip"><b style="background:var(--amber)">!</b>Службові дані</div>
+          <div class="chip"><b style="background:var(--red)">⊘</b>Заборонені дані</div>
+        </div>
+        <h3>ПРО.ШІ</h3>
+        <p>Навчальна платформа: ШІ в роботі — без ризику</p>
+        <div class="url">proai.od.gov.ua</div>
+      </div>
+      <div class="ov-p3 fx-scale" data-b="1">
+        <span class="okr">ОКР 3</span>
+        <div class="mono"><span>[ PROZORRO ]</span><span>[ НАЗК ]</span><span>[ ЄДР ]</span></div>
+        <h3>ПРОЯВ</h3>
+        <p>Державні дані — для будь-якого ШІ-помічника</p>
+        <div class="url">proyav.od.gov.ua</div>
+      </div>
+      <div class="ov-p4 fx-scale" data-b="2">
+        <span class="okr">ОКР 4</span>
+        <div class="rows"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="mm" data-map="mini"></div>
+        <h3>Відкриті дані</h3>
+        <p>ОДА та громади публікують свою інформацію</p>
+      </div>
+      <div class="ov-p2 fx-scale" data-b="3">
+        <span class="okr">ОКР 2</span>
+        <div class="sheet"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><span class="stamp">2027–2029</span></div>
+        <h3>Програма цифрової трансформації</h3>
+        <p>План цифрового розвитку області на 2027–2029 роки</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== ПРО.ШІ ============================== -->
+  <section class="slide" id="s-p1-open" data-theme="p1" data-title="ПРО.ШІ — відкриття">
+    <div class="open" data-key="blk-p1" data-morph="clip">
+      <div class="left">
+        <div class="lg fx-scale" data-b="0" style="--d:2">Ш</div>
+        <h1 data-b="0" style="--d:3">ПРО.ШІ</h1>
+        <div class="tagline" data-b="0" style="--d:5">ШІ в роботі — <span>без ризику</span></div>
+        <div class="desc" data-b="0" style="--d:6">Навчальна платформа для працівників органів влади</div>
+        <div class="url fx-scale" data-b="0" style="--d:8">proai.od.gov.ua</div>
+      </div>
+      <div class="shotwrap fx-right" data-b="0" style="--d:4"><div class="clayframe" data-key="p1-frame"><img src="assets/proai-0.jpg" alt="Головна сторінка ПРО.ШІ"></div></div>
+      <div class="clay c1 fx-scale" data-b="0" style="--d:10"><b style="background:var(--green)">✓</b><div>Відкриті дані<small>Працюйте вільно</small></div></div>
+      <div class="clay c2 fx-scale" data-b="0" style="--d:12"><b style="background:var(--amber)">!</b><div>Службові дані<small>Тільки знеособлено</small></div></div>
+      <div class="clay c3 fx-scale" data-b="0" style="--d:14"><b style="background:var(--red)">⊘</b><div>Заборонені дані<small>Ніколи і нікуди</small></div></div>
+      <div class="badge fx-scale" data-b="0" style="--d:16"><svg class="ico"><use href="#i-award"/></svg></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p1-why" data-theme="p1" data-builds="1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>навіщо</div>
+    <h2 class="title" data-b="0" style="--d:1">Навіщо ми створили ПРО.ШІ</h2>
+    <svg class="links fx-fade" data-b="0" style="--d:6" viewBox="0 0 1920 1080"><path d="M760 470 C 730 470, 720 520, 690 540"/></svg>
+    <svg class="links fx-fade" data-b="1" style="--d:2" viewBox="0 0 1920 1080"><path d="M1160 470 C 1190 470, 1200 520, 1230 540"/></svg>
+    <div class="who fx-scale" data-b="0" style="--d:2"><div class="av"><svg class="ico"><use href="#i-user"/></svg></div><b>Працівники органів влади</b><small>ОДА · РДА · громади</small></div>
+    <div class="goal g1 fx-left" data-b="0" style="--d:5">
+      <div class="ic"><svg class="ico"><use href="#i-shield"/></svg></div>
+      <h3>Безпечно</h3>
+      <p>Знати, які дані можна давати ШІ, а які — ні</p>
+      <div class="chat-l">ПРАВИЛЬНИЙ ЗАПИТ</div><div class="chat">Підготуй відповідь заявнику <span class="pd" style="--k:0"><s>Петренко О. В.</s><i>[ПІБ]</i></span>, що проживає за адресою <span class="pd" style="--k:1"><s>вул. Садова, 12</s><i>[адреса]</i></span></div>
+    </div>
+    <div class="goal g2 fx-right" data-b="1">
+      <div class="ic"><svg class="ico"><use href="#i-spark"/></svg></div>
+      <h3>Простіше</h3>
+      <p>Щоденні документи — швидше і з меншою рутиною</p>
+      <div class="docs"><span style="--k:0"><svg class="ico"><use href="#i-msg"/></svg>Відповідь на звернення<em>✓</em></span><span style="--k:1"><svg class="ico"><use href="#i-chart"/></svg>Звіт<em>✓</em></span><span style="--k:2"><svg class="ico"><use href="#i-doc"/></svg>Протокол наради<em>✓</em></span></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p1-course" data-theme="p1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p1x"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>що зробили</div>
+    <h2 class="title" data-b="0" style="--d:1">Курс <em>зсередини</em></h2>
+    <div class="shotwrap"><div class="clayframe" data-key="p1-frame"><img src="assets/app-dash-0.jpg" alt="Кабінет слухача"></div></div>
+    <div class="facts">
+      <div class="fact fx-right" data-b="0" style="--d:4"><div class="num" data-count="5">0</div><span>модулів</span></div>
+      <div class="fact fx-right" data-b="0" style="--d:6"><div class="num" data-count="47">0</div><span>коротких уроків</span></div>
+      <div class="fact fx-right" data-b="0" style="--d:8"><div class="num">~<span data-count="10">0</span></div><span>хвилин на урок</span></div>
+      <div class="fact fx-right" data-b="0" style="--d:10"><div class="num" style="color:#C98A00"><svg class="ico"><use href="#i-award"/></svg></div><span>сертифікат наприкінці</span></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p1-mod" data-theme="p1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>що зробили</div>
+    <h2 class="title" data-b="0" style="--d:1">Від старту — до <em>сертифіката</em></h2>
+    <div class="route">
+      <div class="rail"><div class="fill" id="modFill"><span class="tok">Ш</span></div></div>
+      <div class="st" style="left:220px;--t:0"><div class="c"><svg class="ico"><use href="#i-cap"/></svg></div><div class="n">МОДУЛЬ 1</div><b>Старт</b><small>що таке ШІ<br>і з чого почати</small></div>
+      <div class="st up" style="left:500px;--t:620"><div class="c"><svg class="ico"><use href="#i-doc"/></svg></div><div class="lab"><div class="n">МОДУЛЬ 2</div><b>Одразу до справи</b><small>листи, звіти, протоколи</small></div></div>
+      <div class="st key" style="left:860px;--t:1420"><div class="c"><svg class="ico"><use href="#i-shield"/></svg></div><div class="n">МОДУЛЬ 3</div><b>Безпека</b><small>які дані можна давати ШІ</small></div>
+      <div class="st up" style="left:1220px;--t:2240"><div class="c"><svg class="ico"><use href="#i-msg"/></svg></div><div class="lab"><div class="n">МОДУЛЬ 4</div><b>Як ставити задачу</b><small>формула вдалого запиту</small></div></div>
+      <div class="st" style="left:1500px;--t:2860"><div class="c"><svg class="ico"><use href="#i-search"/></svg></div><div class="n">МОДУЛЬ 5</div><b>Перевірка</b><small>факти й цифри —<br>до підпису</small></div>
+      <div class="st fin up" style="left:1740px;--t:3400"><div class="c"><svg class="ico"><use href="#i-award"/></svg></div><div class="lab"><div class="n" style="color:#B07A00">ФІНІШ</div><b>Сертифікат</b></div></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p1-speed" data-theme="p1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p1x"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>що зробили</div>
+    <h2 class="title" data-b="0" style="--d:1">Ті самі задачі — <em>в рази швидше</em></h2>
+    <div class="ba">
+      <div class="row" data-b="0" style="--d:3;--w0:33%;--w1:8.3%"><div class="t">Відповідь на звернення</div><div class="track"><div class="bar"></div><span class="old">40 хв</span></div><div class="new">10 хв</div></div>
+      <div class="row" data-b="0" style="--d:9;--w0:100%;--w1:12.5%"><div class="t">Зведення великого звіту</div><div class="track"><div class="bar"></div><span class="old">2 год</span></div><div class="new">15 хв</div></div>
+      <div class="row" data-b="0" style="--d:15;--w0:75%;--w1:12.5%"><div class="t">Протокол наради з аудіозапису</div><div class="track"><div class="bar"></div><span class="old">1,5 год</span></div><div class="new">15 хв</div></div>
+    </div>
+    <div class="foot">Приклади з першого уроку курсу</div>
+  </section>
+
+  <section class="slide" id="s-p1-cert" data-theme="p1" data-builds="1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>що зробили</div>
+    <h2 class="title" data-b="0" style="--d:1">Сертифікат, який <em>легко перевірити</em></h2>
+    <div class="cert fx-left" data-b="0" style="--d:3"><div class="in2">
+      <div class="top"><div class="md"><svg class="ico"><use href="#i-award"/></svg></div>СЕРТИФІКАТ ПРО ПРОХОДЖЕННЯ КУРСУ</div>
+      <h3>ШІ в публічній службі</h3><hr>
+      <div class="nm">Ірина Мельник</div>
+      <div class="ps">Начальник відділу документообігу<br>Одеська обласна державна адміністрація</div>
+      <div class="tags"><span>З відзнакою</span><span>Діє 2 роки</span></div>
+      <div class="code">КОД ПЕРЕВІРКИ <tt>PROAI-2026-7KQ4MD</tt></div>
+    </div></div>
+    <div class="pill fx-scale" data-b="0" style="--d:9;left:640px;top:250px"><b style="background:var(--pa-blue)"><svg class="ico"><use href="#i-file"/></svg></b>PDF — одним кліком</div>
+    <svg class="fly fx-fade" data-b="1" viewBox="0 0 1920 1080"><path d="M880 830 C 1000 830, 1000 640, 1080 600"/></svg>
+    <div class="br fx-right" data-b="1" style="--d:2">
+      <div class="bar"><i></i><i></i><i></i><div class="url"><b>proai.od.gov.ua</b>/verify/PROAI-2026-7KQ4MD</div></div>
+      <div class="ok"><div class="h"><em>✓</em>Сертифікат чинний</div>
+        <div class="rows"><div>Курс<b>ШІ в публічній службі</b></div><div>Власник<b>Ірина Мельник</b></div><div>Результат<b>97% · з відзнакою</b></div><div>Чинний до<b>07.10.2028</b></div></div>
+      </div>
+    </div>
+        <div class="foot">Ім'я та посада — демонстраційні</div>
+  </section>
+
+  <section class="slide" id="s-p1-res1" data-theme="p1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p1x"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>результати</div>
+    <h2 class="title" data-b="0" style="--d:1">Реєстрації по днях</h2>
+    <div class="note" data-b="0" style="--d:22">4 практичні навчання · 21–24.09<small>у середньому по 100 учасників · сині стовпчики — дні навчань</small></div>
+    <div class="chart" id="signChart"></div>
+  </section>
+
+  <section class="slide" id="s-p1-res2" data-theme="p1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p1x"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>результати</div>
+    <h2 class="title" data-b="0" style="--d:1">Від реєстрації до сертифіката</h2>
+    <div class="fn">
+      <div class="fr" data-b="0" style="--d:3;--w:100%"><div class="num" data-count="379">0</div><div class="bar"><i></i><span>зареєструвалися</span></div></div>
+      <div class="fr" data-b="0" style="--d:7;--w:78.4%"><div class="num" data-count="297">0</div><div class="bar"><i></i><span>почали навчання</span></div></div>
+      <div class="fr" data-b="0" style="--d:11;--w:48%"><div class="num" data-count="182">0</div><div class="bar"><i></i><span>дійшли до останнього модуля</span></div></div>
+      <div class="fr last" data-b="0" style="--d:15;--w:47.2%"><div class="num" data-count="179">0</div><div class="bar"><i></i><span>сертифікат</span></div></div>
+    </div>
+    <div class="foot">Дані платформи станом на 07.10.2026 · за три тижні після запуску</div>
+  </section>
+
+  <section class="slide" id="s-p1-res3" data-theme="p1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p1x"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>результати</div>
+    <h2 class="title" data-b="0" style="--d:1">Хто прийшов вчитися</h2>
+    <div class="donut fx-scale" data-b="0" style="--d:2">
+      <svg viewBox="0 0 640 640" style="transform:rotate(-90deg)">
+        <circle cx="320" cy="320" r="250" fill="none" stroke="rgba(38,34,74,.07)" stroke-width="96"/>
+        <circle class="s" id="dn1" cx="320" cy="320" r="250" stroke="var(--pa-blue)"/>
+        <circle class="s" id="dn2" cx="320" cy="320" r="250" stroke="var(--pa-sun)"/>
+        <circle class="s" id="dn3" cx="320" cy="320" r="250" stroke="#8E7CF0"/>
+      </svg>
+      <div class="ctr"><div class="num"><span data-count="84">0</span>%</div><span>з громад</span></div>
+    </div>
+    <div class="leg">
+      <div data-b="0" style="--d:6"><i style="background:var(--pa-blue)"></i><div class="num" data-count="309">0</div><span>органи місцевого<br>самоврядування</span></div>
+      <div data-b="0" style="--d:9"><i style="background:var(--pa-sun)"></i><div class="num" data-count="32">0</div><span>обласна державна<br>адміністрація</span></div>
+      <div data-b="0" style="--d:12"><i style="background:#8E7CF0"></i><div class="num" data-count="29">0</div><span>районні державні<br>адміністрації</span></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p1-res4" data-theme="p1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p1x"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>результати</div>
+    <h2 class="title" data-b="0" style="--d:1">Ті, хто щодня готує документи</h2>
+    <div class="pos" id="posList"></div>
+    <div class="foot">Кожна фігурка — один слухач · посади зі слів самих слухачів</div>
+  </section>
+
+  <section class="slide" id="s-p1-res5" data-theme="p1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p1x"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>результати</div>
+    <h2 class="title" data-b="0" style="--d:1">Не проклікали, а розібралися</h2>
+    <div class="q">
+      <div class="card" data-b="0" style="--d:3">
+        <div class="gauge"><svg viewBox="0 0 380 380" style="transform:rotate(-90deg)"><circle cx="190" cy="190" r="160" fill="none" stroke="#EDEDF1" stroke-width="34"/><circle class="v" cx="190" cy="190" r="160" fill="none" stroke="var(--pa-blue)" stroke-width="34" stroke-linecap="round" style="--a:974"/></svg>
+          <div class="ctr"><div class="num big"><span data-count="96.9" data-dec="1">0</span><small>%</small></div></div></div>
+        <div class="lbl">середній бал<br>підсумкового тесту</div>
+      </div>
+      <div class="card" data-b="0" style="--d:6">
+        <div class="num big" style="color:#C98A00"><span data-count="113">0</span></div>
+        <div class="medals" id="medals"></div>
+        <div class="lbl" style="margin-top:0">сертифікатів із 179 —<br>з відзнакою</div>
+      </div>
+      <div class="card" data-b="0" style="--d:9">
+        <svg class="ico" style="font-size:80px;color:var(--pa-blue)"><use href="#i-clock"/></svg>
+        <div class="num big"><span data-count="1.7" data-dec="1">0</span> <span style="font-size:.5em">дня</span></div>
+        <div class="lbl" style="margin-top:10px">у середньому від першого<br>уроку до сертифіката</div>
+        <div class="days">
+          <div style="--k:0;--w:54.2%">за 1 день<i></i><b>97</b></div>
+          <div style="--k:1;--w:81%">за 3 дні<i></i><b>145</b></div>
+          <div style="--k:2;--w:94.4%">за тиждень<i></i><b>169</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p1-next" data-theme="p1" data-builds="1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p1x"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>що далі</div>
+    <h2 class="title" data-b="0" style="--d:1">Ще два курси — уже в роботі</h2>
+    <div class="courses">
+      <div class="co co1 fx-scale" data-b="0" style="--d:3"><span class="soon">Скоро</span>
+        <div class="lg"><svg class="ico"><use href="#i-db"/></svg></div>
+        <h3>ШІ для відкритих даних</h3>
+        <p>Як перевіряти набори даних і готувати їх у кілька разів швидше</p>
+        <div class="sk"><span><svg class="ico"><use href="#i-search"/></svg>перевірка наборів</span><span><svg class="ico"><use href="#i-table"/></svg>створення наборів</span></div>
+      </div>
+      <div class="co co2 fx-scale" data-b="1"><span class="soon">Скоро</span>
+        <div class="lg"><svg class="ico"><use href="#i-spark"/></svg></div>
+        <h3>Продвинутий курс</h3>
+        <p>Складніший, але дає найбільше користі в роботі</p>
+        <div class="sk"><span><svg class="ico"><use href="#i-slides"/></svg>презентації</span><span><svg class="ico"><use href="#i-folder"/></svg>обробка файлів</span><span><svg class="ico"><use href="#i-photo"/></svg>редагування фото</span><span><svg class="ico"><use href="#i-search"/></svg>пошук даних</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p1-kr" data-theme="p1" data-kr="p1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p1x"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>ключові результати</div>
+    <h2 class="title" data-b="0" style="--d:1">Що було заплановано — і що зроблено</h2>
+    <div class="krs"></div>
+  </section>
+
+  <section class="slide" id="s-p1-kr1" data-theme="p1">
+    <div class="sbg sbg-p1"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p1x"><span class="tag tag-p1"><i>Ш</i>ПРО.ШІ</span>КР 1 · пояснення</div>
+    <h2 class="title note-head" data-b="0" style="--d:1"><span class="st partial"></span>Методичні рекомендації — розіслано для роботи</h2>
+    <div class="doc fx-left" data-b="0" style="--d:3"><svg class="ico ic"><use href="#i-doc"/></svg><h4>Методичні рекомендації з безпечного використання ШІ</h4><i></i><i></i><i></i><i></i><i></i><i></i><span class="nost">ОДА такі документи не затверджує</span></div>
+    <svg class="fly fx-fade" data-b="0" style="--d:10" viewBox="0 0 1920 1080"><path d="M640 560 C 820 560, 840 400, 1000 395"/><path d="M640 600 C 820 600, 840 580, 1000 580"/><path d="M640 640 C 820 640, 840 765, 1000 765"/></svg>
+    <div class="to fx-right" data-b="0" style="--d:12;top:330px"><div class="ic"><svg class="ico"><use href="#i-building"/></svg></div><div><b>Районні державні адміністрації</b><span>усі 7 районів області</span></div></div>
+    <div class="to fx-right" data-b="0" style="--d:14;top:515px"><div class="ic"><svg class="ico"><use href="#i-home"/></svg></div><div><b>Органи місцевого самоврядування</b><span>громади області</span></div></div>
+    <div class="to fx-right" data-b="0" style="--d:16;top:700px"><div class="ic"><svg class="ico"><use href="#i-people"/></svg></div><div><b>Структурні підрозділи ОДА</b><span>для врахування в роботі</span></div></div>
+    <div class="why" data-b="0" style="--d:20">За рекомендацією юридичного управління апарату рекомендації розіслано для врахування в роботі — замість затвердження.</div>
+  </section>
+
+
+  <!-- ============================== ПРОЯВ ============================== -->
+  <section class="slide" id="s-p3-open" data-theme="p3" data-title="ПРОЯВ — відкриття">
+    <video id="pvVideo" muted loop playsinline preload="auto"><source src="assets/proyav-hero.mp4" type="video/mp4"><source src="assets/proyav-hero.webm" type="video/webm"></video>
+    <div class="scrim"></div><div class="vign"></div>
+    <i class="gl v" style="left:640px;--d:2"></i><i class="gl v" style="left:1280px;--d:3"></i>
+    <i class="gl h" style="top:360px;--d:2"></i><i class="gl h" style="top:720px;--d:3"></i>
+    <span class="plus" style="left:640px;top:360px;--d:8"></span><span class="plus" style="left:1280px;top:360px;--d:9"></span>
+    <span class="plus" style="left:640px;top:720px;--d:10"></span><span class="plus" style="left:1280px;top:720px;--d:11"></span>
+    <div class="brand" data-b="0" style="--d:2"><svg width="40" height="40" viewBox="0 0 52 52"><circle cx="26" cy="6" r="2.6" fill="#3D6BFF"/><circle cx="16" cy="16" r="2.6" fill="#3D6BFF"/><circle cx="26" cy="16" r="2.6" fill="#3D6BFF"/><circle cx="36" cy="16" r="2.6" fill="#3D6BFF"/><circle cx="6" cy="26" r="2.6" fill="#3D6BFF"/><circle cx="16" cy="26" r="2.6" fill="#3D6BFF"/><circle cx="26" cy="26" r="4" fill="#3D6BFF"/><circle cx="36" cy="26" r="2.6" fill="#3D6BFF"/><circle cx="46" cy="26" r="2.6" fill="#3D6BFF"/><circle cx="16" cy="36" r="2.6" fill="#3D6BFF"/><circle cx="26" cy="36" r="2.6" fill="#3D6BFF"/><circle cx="36" cy="36" r="2.6" fill="#3D6BFF"/><circle cx="26" cy="46" r="2.6" fill="#3D6BFF"/></svg>ПРОЯВ<span>MCP-СЕРВЕРИ · ОДЕСЬКА ОДА</span></div>
+    <h1><span class="l" style="--i:0">П</span><span class="l" style="--i:1">Р</span><span class="l" style="--i:2">О</span><span class="l" style="--i:3">Я</span><span class="l" style="--i:4">В</span></h1>
+    <div class="ptag" data-b="0" style="--d:14">Державні дані —<br><em>для вашого ШІ</em></div>
+    <svg class="wires" viewBox="0 0 1920 1080">
+      <path style="--d:16" d="M1520 200 L1570 175 L1590 175"/>
+      <path style="--d:19" d="M1320 500 L1380 470 L1560 470"/>
+      <path style="--d:22" d="M1500 760 L1440 900 L1590 900"/>
+    </svg>
+    <div class="box" style="left:1370px;top:200px;--d:15"></div>
+    <div class="box" style="left:1170px;top:420px;--d:18"></div>
+    <div class="box" style="left:1430px;top:640px;width:120px;height:120px;--d:21"></div>
+    <div class="hud" data-b="0" style="left:1600px;top:120px;--d:17"><b>[ PROZORRO ]</b><small>Закупівлі, учасники, ціни</small></div>
+    <div class="hud" data-b="0" style="left:1570px;top:410px;--d:20"><b>[ НАЗК ]</b><small>Декларації посадовців</small></div>
+    <div class="hud" data-b="0" style="left:1600px;top:840px;--d:23"><b>[ ЄДР ]</b><small>Компанії, засновники, керівники</small></div>
+    <div class="foot2" data-b="0" style="--d:25"><div class="purl">proyav.od.gov.ua</div><div class="live"><i></i>ПРАЦЮЄ</div></div>
+  </section>
+
+  <section class="slide" id="s-p3-prob" data-theme="p3" data-builds="1">
+    <div class="sbg sbg-p3"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p3x"><span class="tag tag-p3"><i></i>ПРОЯВ</span>навіщо</div>
+    <h2 class="title" data-b="0" style="--d:1">Без спеціальних знань дістати дані з державних сервісів — складно</h2>
+    <div class="flow">
+      <svg class="ln fx-fade" data-b="0" style="--d:6" viewBox="0 0 1660 520"><path d="M360 230 C 440 230, 460 60, 530 60"/><path d="M360 245 C 440 245, 460 245, 530 245"/><path d="M360 260 C 440 260, 460 425, 530 425"/></svg>
+      <div class="who fx-left" data-b="0" style="--d:2"><div class="av"><svg class="ico"><use href="#i-user"/></svg></div><div class="bub">Скільки громада витратила на ремонт доріг?</div></div>
+      <div class="srv fx-right" data-b="0" style="--d:5;top:10px"><div class="gi"><svg class="ico"><use href="#i-cart"/></svg></div><div><b>Prozorro</b><span>десятки фільтрів і тисячі сторінок</span></div><div class="x">✕</div></div>
+      <div class="srv fx-right" data-b="0" style="--d:7;top:195px"><div class="gi"><svg class="ico"><use href="#i-doc"/></svg></div><div><b>НАЗК</b><span>окрема декларація на кожну людину</span></div><div class="x">✕</div></div>
+      <div class="srv fx-right" data-b="0" style="--d:9;top:380px"><div class="gi"><svg class="ico"><use href="#i-building"/></svg></div><div><b>ЄДР</b><span>архів на сотні мегабайт</span></div><div class="x">✕</div></div>
+      <div class="res fx-scale" data-b="1"><div class="ic"><svg class="ico"><use href="#i-clock"/></svg></div><b>Години ручної роботи</b><span>або програміст</span></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p3-usb" data-theme="p3" data-builds="1">
+    <div class="sbg sbg-p3"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p3x"><span class="tag tag-p3"><i></i>ПРОЯВ</span>що зробили</div>
+    <h2 class="title" data-b="0" style="--d:1">ПРОЯВ — як USB для штучного інтелекту</h2>
+    <svg class="sc fx-fade" data-b="0" style="--d:8" viewBox="0 0 1920 1080">
+      <path d="M550 560 H 640" stroke="#C7CEE6" stroke-width="10" stroke-linecap="round"/>
+      <path d="M940 560 C 1120 560, 1150 395, 1330 395" fill="none" stroke="#C7CEE6" stroke-width="10" stroke-linecap="round"/>
+      <path d="M940 560 C 1120 560, 1150 575, 1330 575" fill="none" stroke="#C7CEE6" stroke-width="10" stroke-linecap="round"/>
+      <path d="M940 560 C 1120 560, 1150 755, 1330 755" fill="none" stroke="#C7CEE6" stroke-width="10" stroke-linecap="round"/>
+      <path class="flowp" d="M1330 395 C 1150 395, 1120 560, 940 560" fill="none" stroke="#3D6BFF" stroke-width="4" stroke-linecap="round"/>
+      <path class="flowp" d="M1330 575 C 1150 575, 1120 560, 940 560" fill="none" stroke="#3D6BFF" stroke-width="4" stroke-linecap="round"/>
+      <path class="flowp" d="M1330 755 C 1150 755, 1120 560, 940 560" fill="none" stroke="#3D6BFF" stroke-width="4" stroke-linecap="round"/>
+      <path class="flowp" d="M640 560 H 550" stroke="#3D6BFF" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    <div class="dev fx-left" data-b="0" style="--d:2"><div class="gi"><svg class="ico"><use href="#i-spark"/></svg></div><b>Ваш ШІ-помічник</b><span>ChatGPT, Claude та інші</span></div>
+    <div class="plug fx-scale" data-b="0" style="--d:5"><i></i>ПРОЯВ</div>
+    <div class="reg fx-right" data-b="0" style="--d:9;top:340px"><div class="gi"><svg class="ico"><use href="#i-cart"/></svg></div><div><b>Prozorro</b><span>закупівлі</span></div></div>
+    <div class="reg fx-right" data-b="0" style="--d:11;top:520px"><div class="gi"><svg class="ico"><use href="#i-doc"/></svg></div><div><b>НАЗК</b><span>декларації</span></div></div>
+    <div class="reg fx-right" data-b="0" style="--d:13;top:700px"><div class="gi"><svg class="ico"><use href="#i-building"/></svg></div><div><b>ЄДР</b><span>компанії та засновники</span></div></div>
+    <div class="q fx-scale" data-b="1">Порівняй ціни на ремонт доріг у громадах</div>
+    <div class="out">
+      <span data-b="1" style="--d:8"><svg class="ico"><use href="#i-table"/></svg>таблиця</span>
+      <span data-b="1" style="--d:10"><svg class="ico"><use href="#i-chart"/></svg>графік</span>
+      <span data-b="1" style="--d:12"><svg class="ico"><use href="#i-file"/></svg>звіт в Excel</span>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p3-conn" data-theme="p3">
+    <div class="sbg sbg-p3"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p3x"><span class="tag tag-p3"><i></i>ПРОЯВ</span>що зробили</div>
+    <h2 class="title" data-b="0" style="--d:1">Підключення — кілька рядків</h2>
+    <div class="code" data-b="0" style="--d:2" id="connCode"></div>
+    <div class="no">
+      <div data-b="0" style="--d:12">програмування</div>
+      <div data-b="0" style="--d:16">ключі доступу</div>
+      <div data-b="0" style="--d:20">реєстрація</div>
+      <div data-b="0" style="--d:24">оплата</div>
+    </div>
+    <div class="time fx-scale" data-b="0" style="--d:30"><i><svg class="ico"><use href="#i-clock"/></svg></i>2 хвилини</div>
+  </section>
+
+  <section class="slide" id="s-p3-demo" data-theme="p3" data-builds="3" data-title="Живий приклад у ChatGPT">
+    <div class="sbg sbg-p3"></div>
+    <div class="gpt" data-b="0">
+      <aside>
+        <div class="nw"><i>✦</i>Новий чат</div>
+        <div class="h">Сьогодні</div>
+        <div class="it on">Витрати на дороги Одещини</div>
+        <div class="it">Звіт по громадах за серпень</div>
+        <div class="it">Постачальники ремонту шкіл</div>
+        <div class="conn"><b>ПРОЯВ</b>Prozorro · НАЗК · ЄДР підключено</div>
+      </aside>
+      <main>
+        <header>ChatGPT <span>▾</span></header>
+        <div class="thread" id="gptThread">
+          <div class="u" id="gptQ"></div>
+          <div class="tools">
+            <div class="tool" data-b="1" style="--d:0;--t:.9s"><span class="stt"><span class="sp"></span><span class="ok">✓</span></span>Шукаю замовників дорожніх робіт <code>proyav-prozorro · aggregate_spend</code><span class="ms">1,8 с</span></div>
+            <div class="tool" data-b="1" style="--d:6;--t:.7s"><span class="stt"><span class="sp"></span><span class="ok">✓</span></span>Знаходжу закупівлі <code>search_index</code><span class="ms">0,03 с</span></div>
+            <div class="tool" data-b="1" style="--d:12;--t:1s"><span class="stt"><span class="sp"></span><span class="ok">✓</span></span>Порівнюю ціну з ринком <code>price_benchmark</code></div>
+            <div class="tool" data-b="1" style="--d:18;--t:.8s"><span class="stt"><span class="sp"></span><span class="ok">✓</span></span>Перевіряю процедуру <code>check_tender</code></div>
+          </div>
+          <div class="a words fx-fade" data-b="2">Знайшов дві свіжі закупівлі поточного ремонту вулиць від 25.08.2026:
+            <table><tr style="--r:0"><th>Закупівля</th><th>Сума</th></tr><tr style="--r:1"><td>Ремонт вул. Дністровська</td><td class="n">102 550 ₴</td></tr><tr style="--r:2"><td>Ремонт вул. Армійська</td><td class="n">98 107 ₴</td></tr></table>
+          </div>
+          <div class="bars fx-fade" data-b="3">
+            <div style="--d:2;--w:100%"><div class="bt"><span>Медіана 34 схожих закупівель</span><span>472 793 ₴</span></div><div class="tr"><i></i></div></div>
+            <div class="me" style="--d:5;--w:21.7%"><div class="bt"><span>Ремонт вул. Дністровська</span><span>102 550 ₴</span></div><div class="tr"><i></i></div></div>
+            <div class="note">Приблизно <b>у 5 разів дешевше</b> за схожі. Варто перевірити обсяг робіт.</div>
+          </div>
+        </div>
+        <div class="composer">Запитайте будь-що<span>↑</span></div>
+      </main>
+    </div>
+    <div class="foot" style="bottom:28px">Реальна сесія ПРОЯВ від 25.08.2026, показана в інтерфейсі ChatGPT</div>
+  </section>
+
+  <section class="slide" id="s-p3-thr" data-theme="p3" data-builds="1">
+    <div class="sbg sbg-p3"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p3x"><span class="tag tag-p3"><i></i>ПРОЯВ</span>результат</div>
+    <h2 class="title" data-b="0" style="--d:1">Поріг входу — <em>прибрали</em></h2>
+    <div class="wall" id="wall">
+      <div class="brick" data-b="0" style="--d:2;--x:0px;--y:0px;--rr:-8deg;--fd:0ms"><svg class="ico"><use href="#i-code"/></svg>код і API</div>
+      <div class="brick" data-b="0" style="--d:3;--x:360px;--y:0px;--rr:6deg;--fd:60ms"><svg class="ico"><use href="#i-table"/></svg>вивантаження</div>
+      <div class="brick" data-b="0" style="--d:4;--x:720px;--y:0px;--rr:-4deg;--fd:120ms"><svg class="ico"><use href="#i-key"/></svg>доступи</div>
+      <div class="brick" data-b="0" style="--d:5;--x:180px;--y:130px;--rr:9deg;--fd:180ms"><svg class="ico"><use href="#i-folder"/></svg>зведення в Excel</div>
+      <div class="brick" data-b="0" style="--d:6;--x:540px;--y:130px;--rr:-7deg;--fd:240ms"><svg class="ico"><use href="#i-user"/></svg>програміст</div>
+      <div class="brick" data-b="0" style="--d:7;--x:360px;--y:260px;--rr:5deg;--fd:300ms"><svg class="ico"><use href="#i-clock"/></svg>години й тижні</div>
+    </div>
+    <div class="stepq fx-scale" data-b="1" style="--d:4"><svg class="ico"><use href="#i-msg"/></svg>Просто поставити питання</div>
+    <div class="who">
+      <div data-b="1" style="--d:8"><svg class="ico"><use href="#i-briefcase"/></svg>бізнес</div>
+      <div data-b="1" style="--d:10"><svg class="ico"><use href="#i-news"/></svg>журналісти</div>
+      <div data-b="1" style="--d:12"><svg class="ico"><use href="#i-home"/></svg>громади</div>
+      <div data-b="1" style="--d:14"><svg class="ico"><use href="#i-gavel"/></svg>депутати й аудитори</div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p3-econ" data-theme="p3" data-builds="2">
+    <div class="sbg sbg-p3"></div>
+    <div class="mapbox fx-fade" data-b="0" data-map="buyers"></div>
+    <div class="side">
+      <div class="eyebrow" data-b="0" data-key="tag-p3x"><span class="tag tag-p3"><i></i>ПРОЯВ</span>Департамент економіки</div>
+      <h2 class="title" data-b="0" style="--d:1;font-size:64px">Щомісячні звіти по закупівлях усіх громад</h2>
+      <div class="stats">
+        <div data-b="0" style="--d:6"><div class="num" data-count="463">0</div><span>розпорядники коштів</span></div>
+        <div data-b="0" style="--d:8"><div class="num" data-count="91">0</div><span>громада</span></div>
+        <div data-b="0" style="--d:10"><div class="num" data-count="7">0</div><span>районів</span></div>
+      </div>
+      <div class="weeks" data-b="1" id="weeks">
+        <h5>Скільки часу йде на один звіт</h5>
+        <div class="cal" id="cal"></div>
+        <div class="wl"><span class="was">Раніше — тижні</span><span class="now">Тепер — пара днів</span></div>
+      </div>
+      <div class="loop" data-b="2"><svg class="ico"><use href="#i-loop"/></svg><p>Департамент підказує, що покращити, — і ми допрацьовуємо інструмент під їхні задачі</p></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p3-kr" data-theme="p3" data-kr="p3">
+    <div class="sbg sbg-p3"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p3x"><span class="tag tag-p3"><i></i>ПРОЯВ</span>ключові результати</div>
+    <h2 class="title" data-b="0" style="--d:1">Що було заплановано — і що зроблено</h2>
+    <div class="krs"></div>
+  </section>
+
+
+  <!-- ============================== ВІДКРИТІ ДАНІ ============================== -->
+  <section class="slide" id="s-p4-open" data-theme="p4" data-title="Відкриті дані — відкриття">
+    <div class="open" data-key="blk-p4" data-morph="clip">
+      <div class="left">
+        <div class="eyebrow" data-b="0" style="--d:2"><span class="tag tag-p4"><i></i>ОКР 4</span></div>
+        <h1 data-b="0" style="--d:3">Відкриті<br>дані</h1>
+        <div class="cap" data-b="0" style="--d:5">Публічна інформація обласної адміністрації та громад — у вигляді відкритих даних</div>
+        <div class="ds">
+          <div data-b="0" style="--d:7"><b>data.gov.ua</b>Освітня мережа Одеської області</div>
+          <div data-b="0" style="--d:8"><b>data.gov.ua</b>Перелік пунктів незламності</div>
+          <div data-b="0" style="--d:9"><b>data.gov.ua</b>Перелік цифрових освітніх центрів</div>
+        </div>
+      </div>
+      <div class="mapbox fx-fade" data-b="0" style="--d:4" data-map="od"></div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p4-sem" data-theme="p4">
+    <div class="sbg sbg-p4"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p4x"><span class="tag tag-p4"><i></i>Відкриті дані</span>що зробили</div>
+    <h2 class="title" data-b="0" style="--d:1">П'ять семінарів для громад</h2>
+    <div class="row">
+      <div class="sm fx-scale" data-b="0" style="--d:3"><div class="n">1</div><b>18.08</b><span>Організація роботи з відкритими даними територіальної громади</span></div>
+      <div class="sm fx-scale" data-b="0" style="--d:4"><div class="n">2</div><b>19.08</b><span>Розпорядчі акти про відкриті дані територіальної громади</span></div>
+      <div class="sm fx-scale" data-b="0" style="--d:5"><div class="n">3</div><b>20.08</b><span>Інформаційний аудит територіальної громади</span></div>
+      <div class="sm fx-scale" data-b="0" style="--d:6"><div class="n">4</div><b>21.08</b><span>Підготовка наборів відкритих даних за рекомендаціями Мінцифри</span></div>
+      <div class="sm fx-scale" data-b="0" style="--d:7"><div class="n">5</div><b>24.08</b><span>Оприлюднення й оновлення наборів відкритих даних</span></div>
+    </div>
+    <div class="tot" data-b="0" style="--d:10"><div class="num" data-count="100">0</div><span>працівників громад пройшли навчання<br>з організації роботи з відкритими даними</span></div>
+  </section>
+
+  <section class="slide" id="s-p4-ds" data-theme="p4">
+    <div class="sbg sbg-p4"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p4x"><span class="tag tag-p4"><i></i>Відкриті дані</span>що зробили</div>
+    <h2 class="title" data-b="0" style="--d:1">ОДА оприлюднила <em>9</em> нових наборів даних</h2>
+    <div class="goal" data-b="0" style="--d:3"><div class="track"><div class="fill"></div><div class="mark"><span>план — 5</span></div></div><div class="lab"><span>data.gov.ua · 17.08 — 18.09.2026</span><b>9</b></div></div>
+    <div class="grid" id="dsGrid"></div>
+  </section>
+
+  <section class="slide" id="s-p4-kr" data-theme="p4" data-kr="p4">
+    <div class="sbg sbg-p4"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p4x"><span class="tag tag-p4"><i></i>Відкриті дані</span>ключові результати</div>
+    <h2 class="title" data-b="0" style="--d:1">Що було заплановано — і що зроблено</h2>
+    <div class="krs"></div>
+  </section>
+
+  <section class="slide" id="s-p4-kr3" data-theme="p4">
+    <div class="sbg sbg-p4"></div>
+    <div class="mapbox fx-fade" data-b="0" data-map="grey" data-hl="UA5110011,UA5110041,UA5110039,UA5110019,UA5110021,UA5102027,UA5102007,UA5102011,UA5102013,UA5102031,UA5102001,UA5114005" data-key="p4-map"></div>
+    <div class="side">
+      <div class="eyebrow" data-b="0" data-key="tag-p4x"><span class="tag tag-p4"><i></i>Відкриті дані</span>КР 3 · пояснення</div>
+      <h2 class="title note-head" data-b="0" style="--d:1;font-size:58px"><span class="st fail">✕</span>Розпорядчі акти надали 12 громад</h2>
+      <div class="steps">
+        <div data-b="0" style="--d:4"><svg class="ico"><use href="#i-cap"/></svg>Провели 5 семінарів для громад</div>
+        <div data-b="0" style="--d:6"><svg class="ico"><use href="#i-doc"/></svg>Дали готові шаблони документів</div>
+      </div>
+      <div class="cmp">
+        <div data-b="0" style="--d:8;--w:50.5%"><div class="t"><span>План — 50% громад</span><span>46</span></div><div class="tr"><i style="background:#C9C9D0"></i></div></div>
+        <div data-b="0" style="--d:11;--w:13.2%"><div class="t"><span>Факт</span><span>12</span></div><div class="tr"><i style="background:#E5484D"></i></div></div>
+      </div>
+      <div class="src leg-od" data-b="0" style="--d:14"><i></i>на карті — громади, що надали акти · 12 з 91</div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p4-kr4" data-theme="p4">
+    <div class="sbg sbg-p4"></div>
+    <div class="mapbox fx-fade" data-b="0" data-map="grey" data-hl="UA5110011,UA5110041,UA5110003,UA5110039,UA5110019,UA5110021,UA5108003,UA5102027,UA5102011,UA5102029,UA5102031" data-key="p4-map"></div>
+    <div class="side">
+      <div class="eyebrow" data-b="0" data-key="tag-p4x"><span class="tag tag-p4"><i></i>Відкриті дані</span>КР 4 · пояснення</div>
+      <h2 class="title note-head" data-b="0" style="--d:1;font-size:58px"><span class="st fail">✕</span>Нові набори оприлюднили 11 громад</h2>
+      <div class="cmp">
+        <div data-b="0" style="--d:4;--w:50.5%"><div class="t"><span>План — 50% громад</span><span>46</span></div><div class="tr"><i style="background:#C9C9D0"></i></div></div>
+        <div data-b="0" style="--d:7;--w:12.1%"><div class="t"><span>Факт</span><span>11</span></div><div class="tr"><i style="background:#E5484D"></i></div></div>
+      </div>
+      <div class="src leg-od" data-b="0" style="--d:10"><i></i>на карті — громади з новими наборами · 11 з 91</div>
+    </div>
+  </section>
+
+
+  <!-- ============================== ПРОГРАМА ============================== -->
+  <section class="slide" id="s-p2-open" data-theme="p2" data-title="Програма — відкриття">
+    <div class="open" data-key="blk-p2" data-morph="clip">
+      <div class="left">
+        <div class="eyebrow" data-b="0" style="--d:2"><span class="tag tag-p2"><i></i>ОКР 2</span></div>
+        <h1 data-b="0" style="--d:3">Програма цифрової трансформації</h1>
+        <div class="cap" data-b="0" style="--d:5">Регіональна програма Одеської області — нова, на три роки</div>
+        <div class="yrs"><span data-b="0" style="--d:7">2027</span><span data-b="0" style="--d:8">2028</span><span data-b="0" style="--d:9">2029</span></div>
+      </div>
+      <div class="cover fx-right" data-b="0" style="--d:4">
+        <img src="assets/logo.svg" alt="">
+        <div class="t1">ОДЕСЬКА ОБЛАСНА ДЕРЖАВНА АДМІНІСТРАЦІЯ</div>
+        <div class="t2">Регіональна програма цифрової трансформації Одеської області на 2027–2029 роки</div>
+        <div class="t3">м. Одеса</div>
+        <i></i><i></i><i style="width:60%"></i>
+        <div class="st">ЗАТВЕРДЖЕНО<small>29.09.2026 № 1232/А-2026</small></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p2-path" data-theme="p2" data-builds="2">
+    <div class="sbg sbg-p2"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p2x"><span class="tag tag-p2"><i></i>Програма</span>як створювали</div>
+    <h2 class="title" data-b="0" style="--d:1">Від аналізу до розпорядження</h2>
+    <div class="line"><i id="pathLine"></i></div>
+    <div class="stg" style="left:230px" id="pg1"><div class="c"><svg class="ico"><use href="#i-search"/></svg></div><b>Аналіз</b><small>стан кожної сфери</small></div>
+    <div class="stg" style="left:717px" id="pg2"><div class="c"><svg class="ico"><use href="#i-pen"/></svg></div><b>Проєкт</b><small>разом із виконавцями</small></div>
+    <div class="stg" style="left:1203px" id="pg3"><div class="c"><svg class="ico"><use href="#i-swap"/></svg></div><b>Погодження</b><small>Мінцифри · 18.09.2026</small></div>
+    <div class="stg" style="left:1690px" id="pg4"><div class="c"><svg class="ico"><use href="#i-stamp"/></svg></div><b>Затвердження</b><small>29.09.2026</small></div>
+    <div class="detail" id="pathDetail"></div>
+    <div class="stamp" data-b="2" style="--d:8">ЗАТВЕРДЖЕНО<small>розпорядження № 1232/А-2026</small></div>
+  </section>
+
+  <section class="slide" id="s-p2-gl" data-theme="p2" data-builds="1">
+    <div class="sbg sbg-p2"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p2x"><span class="tag tag-p2"><i></i>Програма</span>що в ній</div>
+    <h2 class="title" data-b="0" style="--d:1">Шість напрямів на три роки</h2>
+    <div class="dirs" id="dirs"></div>
+    <div class="side">
+      <div class="bx" data-b="0" style="--d:9"><div class="num" data-count="40">0</div><span>завдань і проєктів</span></div>
+      <div class="bx" data-b="1"><div class="num"><span data-count="327.7" data-dec="1">0</span> млн ₴</div><span>з обласного бюджету</span>
+        <div class="yb">
+          <div style="--d:3;--h:100%"><i></i><b>139,1</b><small>2027</small></div>
+          <div style="--d:5;--h:79%"><i></i><b>109,8</b><small>2028</small></div>
+          <div style="--d:7;--h:57%"><i></i><b>78,9</b><small>2029</small></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" id="s-p2-kr" data-theme="p2" data-kr="p2">
+    <div class="sbg sbg-p2"></div>
+    <div class="eyebrow" data-b="0" data-key="tag-p2x"><span class="tag tag-p2"><i></i>Програма</span>ключові результати</div>
+    <h2 class="title" data-b="0" style="--d:1">Що було заплановано — і що зроблено</h2>
+    <div class="krs three"></div>
+  </section>
+
+  <!-- ============================== ФІНАЛ ============================== -->
+  <section class="slide" id="s-final" data-theme="p0" data-hub="final" data-title="Підсумок"></section>
+
+  <section class="slide" id="s-thanks" data-theme="p0">
+    <div class="c">
+      <img class="fx-scale" data-b="0" data-key="logo" src="assets/logo.svg" alt="">
+      <h1 class="fx-scale" data-b="0" style="--d:2">Дякую!</h1>
+      <div class="cap" data-b="0" style="--d:4">Із задоволенням відповім на запитання</div>
+      <div class="urls" data-b="0" style="--d:7"><span style="color:var(--pa-blue)">proai.od.gov.ua</span><span style="color:var(--pv)">proyav.od.gov.ua</span></div>
+    </div>
+  </section>
+
+  <div id="prog"></div>
+</div>
+
+<div id="black"></div>
+<div id="stepno"></div>
+<div id="help"><div class="box">
+  <h3>Керування</h3>
+  <table>
+    <tr><td>→  Space  PgDn  клік</td><td>далі</td></tr>
+    <tr><td>←  PgUp</td><td>назад</td></tr>
+    <tr><td>1 · 2 · 3 · 4</td><td>до ПРО.ШІ / Програми / ПРОЯВ / Відкритих даних</td></tr>
+    <tr><td>Home / End</td><td>на початок / в кінець</td></tr>
+    <tr><td>B</td><td>погасити екран</td></tr>
+    <tr><td>F</td><td>на весь екран</td></tr>
+    <tr><td>P</td><td>вікно доповідача</td></tr>
+    <tr><td>N</td><td>номер кліку</td></tr>
+    <tr><td>H  ?</td><td>ця довідка</td></tr>
+  </table>
+</div></div>
+
+<div id="presenter">
+  <div class="top">
+    <span>Клік</span><span class="clk" id="pClk">0 / 0</span>
+    <button id="pPrev">← назад</button><button id="pNext">далі →</button><button id="pReset">скинути таймер</button>
+    <span class="tmr" id="pTmr">00:00</span>
+  </div>
+  <div class="cols">
+    <div class="now"><div class="lbl">Зараз</div><div class="scr" id="pScr"></div><div class="txt" id="pNow"></div></div>
+    <div class="nxt"><div class="lbl">Наступний клік</div><div class="txt" id="pNext2"></div></div>
+  </div>
+  <div class="bot">Керуйте стрілками в цьому вікні — головне вікно на проекторі йде синхронно.</div>
+</div>
+
+<script src="assets/odesa-map.js"></script>
+
+<!-- =====================================================================
+     ДАНІ, ЯКІ ЗРУЧНО ПРАВИТИ
+     ===================================================================== -->
+<script>
+/* Статус КР: done ✓ · partial ◐ · fail ✕ · todo ?   note: true — далі йде слайд-пояснення */
+window.KR = {
+  p1: [
+    { k: 'КР 1', s: 'partial', note: true, t: 'Методичні рекомендації з безпечного та відповідального використання ШІ', e: 'Розроблено й розіслано РДА, громадам і підрозділам ОДА' },
+    { k: 'КР 2', s: 'done', t: 'Не менше 4 практичних навчань і 100 учасників', e: '4 навчання по ~100 учасників · 379 слухачів · 179 сертифікатів' },
+    { k: 'КР 3', s: 'done', t: 'Збірник із 30+ сценаріїв і шаблонів запитів', e: '30 готових запитів + 75 матеріалів у бібліотеці' },
+    { k: 'КР 4', s: 'partial', t: 'Не менше 50% підрозділів ОДА користуються шаблонами', e: 'На платформі навчаються 32 працівники ОДА' }
+  ],
+  p3: [
+    { k: 'КР 1', s: 'done', t: 'MCP-сервери Prozorro і НАЗК розроблені й опубліковані', e: 'Понад план — ще й ЄДР · proyav.od.gov.ua' },
+    { k: 'КР 2', s: 'done', t: 'Локальний індекс, кеш і дворівнева видача', e: 'Коротка вижимка за замовчуванням, повний документ — на запит' },
+    { k: 'КР 3', s: 'done', t: 'Готовий сценарій аудиту тендерів', e: 'Ціна проти ринку, пошук аналогів, зв\'язки учасників' },
+    { k: 'КР 4', s: 'done', t: 'Просте підключення без програмування і ключів', e: 'Кілька рядків у налаштуваннях · Департамент економіки користується щомісяця' }
+  ],
+  p4: [
+    { k: 'КР 1', s: 'done', t: '5 навчальних семінарів для громад, 100+ учасників', e: '100 працівників громад' },
+    { k: 'КР 2', s: 'done', t: 'ОДА оприлюднила щонайменше 5 нових наборів', e: '9 нових наборів на data.gov.ua' },
+    { k: 'КР 3', s: 'fail', note: true, t: 'У 50% громад ухвалені розпорядчі акти щодо відкритих даних', e: 'Акти надали 12 громад з 91' },
+    { k: 'КР 4', s: 'fail', note: true, t: '50% громад оприлюднили ≥ 5 нових наборів', e: 'Нові набори оприлюднили 11 громад з 91' }
+  ],
+  p2: [
+    { k: 'КР 1', s: 'done', t: 'Аналіз стану інформатизації і перелік завдань на 2027–2029', e: 'Стан кожної сфери: освіта, медицина, соцсфера, ЦНАП, кібербезпека та інші' },
+    { k: 'КР 2', s: 'done', t: 'Проєкт програми — разом із підрозділами та РДА', e: '16 підрозділів ОДА, РДА та громади як виконавці' },
+    { k: 'КР 3', s: 'done', t: 'Погоджено й затверджено розпорядчим актом', e: 'Мінцифри — 18.09.2026 · розпорядження № 1232/А-2026 від 29.09.2026' }
+  ]
+};
+
+/* Нові набори ОДА на data.gov.ua за квартал */
+window.DATASETS = [
+  ['18.09', 'Консультації з громадськістю: повідомлення та звіти'],
+  ['14.09', 'План консультацій з громадськістю'],
+  ['31.08', 'Центри соціально-психологічної реабілітації дітей'],
+  ['27.08', 'Освітня мережа Одеської області'],
+  ['24.08', 'Ліцензійний реєстр закладів освіти'],
+  ['20.08', 'Перелік цифрових освітніх центрів'],
+  ['19.08', 'Перелік інклюзивно-ресурсних центрів'],
+  ['19.08', 'Перелік пунктів незламності'],
+  ['17.08', 'Використання освітньої субвенції']
+];
+
+/* Текст доповідача: один запис — один клік. З нього генерується speech.md */
+window.NOTES = [
+/* 0 */ 'Добрий день. Розкажу, що наша команда зробила за квартал.',
+/* 1 */ 'У нас було чотири проєкти. Перший — ПРО.ШІ: навчальна платформа, де працівники органів влади вчаться користуватися штучним інтелектом.',
+/* 2 */ 'Другий — ПРОЯВ: він підключає державні реєстри — Prozorro, НАЗК, ЄДР — до будь-якого ШІ-помічника.',
+/* 3 */ 'Третій — відкриті дані обласної адміністрації та громад.',
+/* 4 */ 'І четвертий — нова регіональна програма цифрової трансформації на 2027–2029 роки. Почну з ПРО.ШІ.',
+/* 5 */ 'ПРО.ШІ — proai.od.gov.ua. Платформа, де можна за кілька годин навчитися безпечно користуватися ШІ в роботі.',
+/* 6 */ 'Навіщо ми створили ПРО.ШІ. Перша мета — щоб працівники органів влади користувалися ШІ безпечно: знали, які дані можна давати ШІ, а які — ні. Наприклад, прізвище та адресу заявника замінюємо на позначки.',
+/* 7 */ 'Друга мета — щоб ШІ реально спрощував роботу: відповіді на звернення, звіти, протоколи — швидше і з меншою рутиною.',
+/* 8 */ 'Так курс виглядає зсередини: п\'ять модулів, сорок сім коротких уроків, кожен — хвилин десять. Людина бачить свій прогрес і що їй лишилося до сертифіката.',
+/* 9 */ 'Курс — це маршрут із п\'яти модулів: старт, одразу практика на реальних документах, безпека, як ставити задачу ШІ і як перевіряти результат.',
+/* 10 */ 'Що це дає на практиці: відповідь на звернення — десять хвилин замість сорока, зведення великого звіту — п\'ятнадцять хвилин замість двох годин.',
+/* 11 */ 'Хто пройшов курс — отримує іменний сертифікат. Його можна одразу завантажити в PDF, діє він два роки.',
+/* 12 */ 'І його легко перевірити: у кожного сертифіката є код — вводиш його на сайті й одразу бачиш, що сертифікат справжній і чинний.',
+/* 13 */ 'Тепер результати. Ми провели чотири практичні навчання — з двадцять першого по двадцять четверте вересня, на кожному в середньому по сто людей. Сині стовпчики — це дні навчань: саме тоді пішли основні реєстрації.',
+/* 14 */ 'За три тижні зареєструвалися триста сімдесят дев\'ять людей, майже триста почали навчання, і сто сімдесят дев\'ять пройшли курс повністю та отримали сертифікат.',
+/* 15 */ 'Вісімдесят чотири відсотки слухачів — з органів місцевого самоврядування. Тобто курс вийшов далеко за межі ОДА.',
+/* 16 */ 'За посадами — переважно головні спеціалісти та начальники відділів, ті, хто щодня готує документи. Є адміністратори ЦНАП і керівники громад.',
+/* 17 */ 'І вчилися всерйоз: середній бал — дев\'яносто сім відсотків, сто тринадцять сертифікатів із ста сімдесяти дев\'яти — з відзнакою. А від першого уроку до сертифіката в середньому менше двох днів — курс справді можна пройти паралельно з роботою.',
+/* 18 */ 'Далі — ще два курси. Перший — про відкриті дані: як перевіряти набори і швидше їх створювати.',
+/* 19 */ 'Другий — продвинутий: складніший, але дає найбільше — презентації, обробка файлів, редагування фото, пошук даних.',
+/* 20 */ 'Ключові результати проєкту. Навчання і бібліотеку запитів — виконано. Використання шаблонів в ОДА — частково: на платформі вже тридцять два працівники ОДА. А по методичних рекомендаціях є нюанс.',
+/* 21 */ 'Обласна адміністрація такі документи не затверджує. Тому за рекомендацією юридичного управління апарату ми розіслали методичні рекомендації районним адміністраціям, громадам і структурним підрозділам ОДА — для врахування в роботі.',
+/* 22 */ 'Другий проєкт — ПРОЯВ. Він підключає державні реєстри — Prozorro, НАЗК і ЄДР — до вашого ШІ-помічника.',
+/* 23 */ 'Навіщо це. Держава публікує багато даних, але без спеціальних знань отримати з них відповідь складно: у Prozorro — десятки фільтрів і тисячі сторінок, у НАЗК — окрема декларація на кожну людину, ЄДР — архів на сотні мегабайт.',
+/* 24 */ 'У результаті просте питання — це години ручної роботи або програміст.',
+/* 25 */ 'ПРОЯВ працює як USB-роз\'єм: одним кінцем підключається до ШІ-помічника, іншим — до державних реєстрів.',
+/* 26 */ 'І далі людина просто питає звичайними словами, а ШІ сам бере дані й видає таблицю, графік чи звіт.',
+/* 27 */ 'Підключення — кілька рядків у налаштуваннях. Без програмування, без ключів і без реєстрації.',
+/* 28 */ 'Ось як це виглядає в ChatGPT. Питаю: скільки Одещина витрачає на ремонт доріг і чи не переплачує громада.',
+/* 29 */ 'ШІ сам звертається до ПРОЯВ: шукає закупівлі, порівнює ціни, перевіряє процедуру. Кілька секунд.',
+/* 30 */ 'Відповідь — дві свіжі закупівлі ремонту вулиць із сумами.',
+/* 31 */ 'І порівняння з тридцятьма чотирма схожими: ця закупівля приблизно в п\'ять разів дешевша. Варто подивитися, чому.',
+/* 32 */ 'Що це дає. Раніше для такого аналізу потрібні були код, вивантаження, зведення в Excel, програміст.',
+/* 33 */ 'Тепер досить поставити питання — і це доступно бізнесу, журналістам, громадам, депутатам.',
+/* 34 */ 'Найкращий приклад — Департамент економіки. Щомісяця вони збирають звіти по закупівлях усіх громад області: чотириста шістдесят три розпорядники коштів.',
+/* 35 */ 'Раніше на це йшли тижні. Тепер, за їхніми словами, — пара днів, і без мороки.',
+/* 36 */ 'Вони ж підказують, що покращити, — і ми допрацьовуємо інструмент під їхні задачі.',
+/* 37 */ 'Усі чотири ключові результати ПРОЯВ виконано, а ЄДР ми підключили понад план.',
+/* 38 */ 'Третій проєкт — відкриті дані. Задача — щоб обласна адміністрація і громади публікували свою інформацію у вигляді відкритих даних.',
+/* 39 */ 'З вісімнадцятого по двадцять четверте серпня ми провели п\'ять семінарів для громад: від організації роботи з відкритими даними і розпорядчих актів — до підготовки та оприлюднення наборів. Їх пройшли сто працівників громад.',
+/* 40 */ 'Сама ОДА за квартал оприлюднила дев\'ять нових наборів даних на data.gov.ua — при плані п\'ять. Це освітня мережа, пункти незламності, центри реабілітації дітей, консультації з громадськістю та інші.',
+/* 41 */ 'Ключові результати: семінари і набори ОДА — виконано. А з громадами — не вийшло, поясню.',
+/* 42 */ 'Розпорядчі акти про відкриті дані надали лише дванадцять громад — при плані сорок шість, попри семінари та готові шаблони.',
+/* 43 */ 'А нові набори даних на порталі оприлюднили одинадцять громад з дев\'яноста однієї — при плані сорок шість.',
+/* 44 */ 'І останній проєкт — регіональна програма цифрової трансформації Одеської області на 2027–2029 роки.',
+/* 45 */ 'Почали з аналізу: подивилися стан інформатизації в кожній сфері — освіта, медицина, соціальна сфера, ЦНАП, кібербезпека, транспорт та інші.',
+/* 46 */ 'Програму писали разом із шістнадцятьма структурними підрозділами ОДА, районними адміністраціями та громадами.',
+/* 47 */ 'Вісімнадцятого вересня її погодило Мінцифри, а двадцять дев\'ятого вересня програму затверджено розпорядженням.',
+/* 48 */ 'У програмі шість напрямів і сорок завдань — від інфраструктури й кібербезпеки до ЦНАП, відкритих даних і агросектору.',
+/* 49 */ 'Загальний обсяг — понад триста двадцять сім мільйонів гривень з обласного бюджету на три роки.',
+/* 50 */ 'Усі три ключові результати по програмі виконано.',
+/* 51 */ 'Якщо коротко: сто сімдесят дев\'ять людей навчилися працювати з ШІ; Департамент економіки робить звіти за дні замість тижнів; ОДА оприлюднила дев\'ять нових наборів даних; і є затверджена програма на три роки.',
+/* 52 */ 'Дякую! Із задоволенням відповім на запитання.'
+];
+</script>
+
+<script>
+(() => {
+'use strict';
+const NOTES = window.NOTES;
+const isPresenter = new URLSearchParams(location.search).has('presenter');
+
+/* =================================================================
+   Вікно доповідача
+   ================================================================= */
+if (isPresenter) {
+  document.body.classList.add('pres');
+  const $ = id => document.getElementById(id);
+  let t0 = null;
+  const send = m => window.opener && window.opener.postMessage(m, '*');
+  addEventListener('message', e => {
+    const m = e.data || {};
+    if (m.t !== 'step') return;
+    $('pClk').textContent = m.n + ' / ' + (m.total - 1);
+    $('pScr').textContent = m.title || '';
+    $('pNow').textContent = NOTES[m.n] || '—';
+    $('pNext2').textContent = NOTES[m.n + 1] || '(кінець)';
+    if (m.n > 0 && t0 === null) t0 = Date.now();
+  });
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); send({ t: 'nav', d: 1 }); }
+    if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); send({ t: 'nav', d: -1 }); }
+    if (e.key.toLowerCase() === 'b') send({ t: 'black' });
+  });
+  $('pPrev').onclick = () => send({ t: 'nav', d: -1 });
+  $('pNext').onclick = () => send({ t: 'nav', d: 1 });
+  $('pReset').onclick = () => { t0 = Date.now(); };
+  setInterval(() => {
+    const s = t0 ? Math.floor((Date.now() - t0) / 1000) : 0;
+    $('pTmr').textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+  }, 500);
+  send({ t: 'hello' });
+  return;
+}
+
+const stage = document.getElementById('stage');
+let SCALE = 1;
+const fit = () => { SCALE = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = `translate(-50%,-50%) scale(${SCALE})`; };
+addEventListener('resize', fit); fit();
+
+/* =================================================================
+   Карта
+   ================================================================= */
+const M = window.ODESA_MAP;
+const RAION_TINT = ['#DCE6FF', '#E6F6EE', '#FFF1D6', '#ECE6FF', '#E1F0FF', '#FDE8E4', '#E8F4F1'];
+function mapSVG(kind) {
+  if (!M) return '';
+  const [ox, oy] = M.odesa;
+  const rank = new Map(M.hromady.map(h => [h.id, Math.hypot(h.c[0] - ox, h.c[1] - oy)]).sort((a, b) => a[1] - b[1]).map(([id], i) => [id, i]));
+  const maxB = Math.max(...M.hromady.map(h => h.buyers));
+  const raionIdx = new Map(M.raions.map((r, i) => [r.name, i]));
+  const hs = M.hromady.map((h, i) => {
+    const t = kind === 'od' || kind === 'mini' ? ((i * 37) % 100 / 100).toFixed(2) : Math.sqrt(h.buyers / maxB).toFixed(3);
+    const tint = RAION_TINT[raionIdx.get(h.raion) % RAION_TINT.length];
+    if (kind === 'hello') {
+      const col = ['#C9D6FB', '#DCD3FD', '#C3EBDA', '#FCE6B0'][i % 4];
+      const tw = (i * 53) % 100 < 35 ? ' tw' : '';
+      return `<path class="h${tw}" d="${h.d}" style="--i:${rank.get(h.id)};--hc:color-mix(in srgb, ${tint} 45%, #fff);--tc:${col};--dl:${((i * 37) % 70) / 10 + 3}s;--dur:${5 + (i * 13) % 5}s"/>`;
+    }
+    return `<path class="h" data-id="${h.id}" d="${h.d}" style="--i:${rank.get(h.id)};--t:${t};--hc:${tint}"/>`;
+  }).join('');
+  const rs = kind === 'mini' ? '' : M.raions.map(r => `<path class="r" d="${r.d}"/>`).join('');
+  const labels = kind === 'buyers' ? M.raions.map(r => `<text class="rl" x="${r.c[0]}" y="${r.c[1]}" text-anchor="middle">${r.name}</text>`).join('') : '';
+  const o = kind === 'mini' ? '' : `<path class="o" d="${M.oblast}" pathLength="1"/>`;
+  let extra = '';
+  if (kind === 'hello') {
+    const cs = M.centers.filter(c => c.lvl === 2);
+    extra = cs.map((c, k) => {
+      const [x, y] = c.p, mx = (ox + x) / 2 + (y - oy) * .18, my = (oy + y) / 2 - (x - ox) * .18;
+      return `<path class="arc" id="arc${k}" d="M${ox} ${oy} Q${mx} ${my} ${x} ${y}" style="--k:${k}"/>` +
+        `<circle class="pulse" r="7" fill="${['#3763E8', '#7C5CFF', '#0E9F6E', '#E0A100'][k % 4]}"><animateMotion dur="${2.4 + k * .3}s" repeatCount="indefinite"><mpath href="#arc${k}"/></animateMotion></circle>` +
+        `<circle class="node" cx="${x}" cy="${y}" r="11" style="--k:${k}"/>`;
+    }).join('') + `<circle class="ring" cx="${ox}" cy="${oy}" r="16"/><circle class="hubdot" cx="${ox}" cy="${oy}" r="14"/><text class="city" x="${ox + 30}" y="${oy + 10}">Одеса</text>`;
+  }
+  return `<svg class="map" viewBox="0 0 ${M.w} ${M.h}" preserveAspectRatio="xMidYMid meet">${hs}${rs}${o}${labels}${extra}</svg>`;
+}
+document.getElementById('helloMap').innerHTML = mapSVG('hello');
+
+/* =================================================================
+   Хаб: чотири блоки (огляд, переходи між проєктами, фінал)
+   ================================================================= */
+const HUB_ORDER = ['p1', 'p3', 'p4', 'p2'];
+const TILE = {
+  p1: '<div class="tile tile-p1" data-key="tile-p1" style="left:LEFTpx;top:34px">Ш</div>',
+  p3: '<div class="tile tile-p3" data-key="tile-p3" style="left:LEFTpx;top:34px"><svg width="50" height="50" viewBox="0 0 52 52"><circle cx="26" cy="6" r="2.6" fill="#3D6BFF"/><circle cx="16" cy="16" r="2.6" fill="#3D6BFF"/><circle cx="26" cy="16" r="2.6" fill="#3D6BFF"/><circle cx="36" cy="16" r="2.6" fill="#3D6BFF"/><circle cx="6" cy="26" r="2.6" fill="#3D6BFF"/><circle cx="16" cy="26" r="2.6" fill="#3D6BFF"/><circle cx="26" cy="26" r="4" fill="#3D6BFF"/><circle cx="36" cy="26" r="2.6" fill="#3D6BFF"/><circle cx="46" cy="26" r="2.6" fill="#3D6BFF"/><circle cx="16" cy="36" r="2.6" fill="#3D6BFF"/><circle cx="26" cy="36" r="2.6" fill="#3D6BFF"/><circle cx="36" cy="36" r="2.6" fill="#3D6BFF"/><circle cx="26" cy="46" r="2.6" fill="#3D6BFF"/></svg></div>',
+  p4: '<div class="tile tile-p4" data-key="tile-p4" style="left:LEFTpx;top:34px"><svg class="ico"><use href="#i-db"/></svg></div>',
+  p2: '<div class="tile tile-p2" data-key="tile-p2" style="left:LEFTpx;top:34px"><svg class="ico"><use href="#i-doc"/></svg></div>'
+};
+const miniMap = mapSVG('mini');
+const BODY = {
+  p1: { okr: 'ОКР 1', html: '<div class="chips"><div class="chip"><b style="background:var(--green)">✓</b>Відкриті дані</div><div class="chip"><b style="background:var(--amber)">!</b>Службові дані</div><div class="chip"><b style="background:var(--red)">⊘</b>Заборонені дані</div></div><h3>ПРО.ШІ</h3><p>Навчальна платформа: ШІ в роботі — без ризику</p><div class="url">proai.od.gov.ua</div>', fin: '<div class="big num" data-count="179">0</div><p>людей навчилися працювати з ШІ безпечно</p>' },
+  p3: { okr: 'ОКР 3', html: '<div class="mono"><span>[ PROZORRO ]</span><span>[ НАЗК ]</span><span>[ ЄДР ]</span></div><h3>ПРОЯВ</h3><p>Державні реєстри — для будь-якого ШІ-помічника</p><div class="url">proyav.od.gov.ua</div>', fin: '<div class="mono"><span>[ PROZORRO ]</span><span>[ НАЗК ]</span><span>[ ЄДР ]</span></div><div class="big sm">тижні → дні</div><p>звіти по закупівлях громад для Департаменту економіки</p>' },
+  p4: { okr: 'ОКР 4', html: `<div class="mm">${miniMap}</div><h3>Відкриті дані</h3><p>ОДА та громади публікують свою інформацію</p>`, fin: `<div class="mm">${miniMap}</div><div class="big num" style="color:var(--od)" data-count="9">0</div><p>нових наборів даних ОДА</p>` },
+  p2: { okr: 'ОКР 2', html: '<div class="sheet"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><span class="stamp">2027–2029</span></div><h3>Програма цифрової трансформації</h3><p>План цифрового розвитку області на три роки</p>', fin: '<div class="sheet"><i></i><i></i><i></i><i></i><i></i><span class="stamp">✓</span></div><div class="big sm" style="color:var(--pg)">327,7 млн ₴</div><p>програма на 2027–2029 затверджена</p>' }
+};
+function hubHTML(mode) {
+  const doneUntil = { start: 0, p3: 1, p4: 2, p2: 3, final: 0 }[mode];
+  const title = mode === 'final' ? 'Якщо коротко' : mode === 'start' ? 'Чотири проєкти кварталу' : 'Наступний проєкт';
+  let blocks = '', tiles = '';
+  HUB_ORDER.forEach((p, i) => {
+    const left = i * 424;
+    const cls = ['blk', `blk-${p}`, 'fx-scale'];
+    if (i < doneUntil) cls.push('done');
+    if (p === mode) cls.push('next');
+    const b = mode === 'start' ? i : 0;
+    const key = mode === 'final' ? '' : ` data-key="blk-${p}"`;
+    blocks += `<div class="${cls.join(' ')}"${key} data-b="${b}" style="left:${left}px;--d:${mode === 'start' ? 2 : 2 + i}"><span class="okr">${BODY[p].okr}</span>${mode === 'final' ? BODY[p].fin : BODY[p].html}</div>`;
+    tiles += TILE[p].replace('LEFT', left + 34).replace('top:34px', `top:34px;--d:${mode === 'start' ? 3 : 3 + i}`).replace('class="tile', `class="tile fx-scale${i < doneUntil ? ' dim' : ''}`).replace('data-key=', `data-b="${b}" data-key=`);
+  });
+  return `<img class="hub-logo" data-key="logo" src="assets/logo.svg" alt="">` +
+    `<div class="eyebrow" data-b="0">${mode === 'final' ? 'Підсумок' : 'Підсумки кварталу'}</div>` +
+    `<h2 class="title" data-b="0" style="--d:1">${title}</h2><div class="hub">${blocks}${tiles}</div>`;
+}
+document.querySelectorAll('[data-hub]').forEach(s => { s.innerHTML = hubHTML(s.dataset.hub); });
+document.querySelectorAll('[data-map]').forEach(el => {
+  el.innerHTML = mapSVG(el.dataset.map);
+  (el.dataset.hl || '').split(',').filter(Boolean).forEach((id, k) => { const h = el.querySelector(`[data-id="${id}"]`); if (h) { h.classList.add('on'); h.style.setProperty('--k', k); } });
+});
+document.querySelectorAll('.ov-p4 .mm .h').forEach(h => { h.style.fill = 'color-mix(in srgb, var(--od) calc(15% + var(--t) * 70%), #E3F6EE)'; });
+
+/* =================================================================
+   Генеровані частини
+   ================================================================= */
+document.querySelectorAll('.words').forEach(el => {
+  let i = 0;
+  const walk = node => [...node.childNodes].forEach(ch => {
+    if (ch.nodeType === 3) {
+      const frag = document.createDocumentFragment();
+      ch.textContent.split(/(\s+)/).forEach(part => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); return; }
+        const s = document.createElement('span'); s.className = 'w'; s.style.setProperty('--i', i++); s.textContent = part; frag.appendChild(s);
+      });
+      ch.replaceWith(frag);
+    } else if (ch.nodeType === 1 && ch.tagName !== 'TABLE') walk(ch);
+  });
+  walk(el);
+});
+
+const person = i => `<svg style="--i:${i}"><use href="#i-person"/></svg>`;
+
+(() => {
+  const data = [['16.09',2],['17.09',0],['18.09',12],['19.09',3],['20.09',1],['21.09',50],['22.09',73],['23.09',55],['24.09',101],['25.09',21],['26.09',1],['27.09',0],['28.09',26],['29.09',15],['30.09',4],['01.10',5],['02.10',2],['03.10',0],['04.10',1],['05.10',4],['06.10',2],['07.10',1]];
+  const peaks = new Set(['21.09','22.09','23.09','24.09']);
+  document.getElementById('signChart').innerHTML = data.map(([d, v], i) =>
+    `<div class="col fx-fade${peaks.has(d) ? ' pk' : ''}" data-b="0" style="--d:${(i * 0.7).toFixed(1)};--h:${Math.max(v / 101 * 92, v ? 1.2 : 0)}%"><i></i>${peaks.has(d) ? `<span class="v">${v}</span>` : ''}<span class="dl">${i % 2 === 0 || peaks.has(d) ? d : ''}</span></div>`).join('');
+})();
+
+(() => {
+  const P = [['Головні спеціалісти', 146, 'var(--pa-blue)'], ['Начальники відділів і заступники', 104, '#5B7FEF'], ['Спеціалісти та фахівці', 39, '#8EA6F5'], ['Адміністратори ЦНАП', 27, '#E0A100'], ['Керівники громад і установ', 24, '#8E7CF0'], ['Інші посади', 22, '#B9B9C0']];
+  document.getElementById('posList').innerHTML = P.map(([t, n, c], k) =>
+    `<div class="ps" data-b="0" style="--d:${3 + k * 2};--c:${c}"><div class="t">${t}</div><div class="pp">${Array.from({ length: n }, (_, i) => person(i)).join('')}</div><div class="num" data-count="${n}">0</div></div>`).join('');
+})();
+
+document.getElementById('medals').innerHTML = Array.from({ length: 179 }, (_, i) => `<i class="${i < 113 ? 'h' : 'c'}" style="--i:${i}"></i>`).join('');
+document.getElementById('cal').innerHTML = Array.from({ length: 20 }, (_, i) => `<i class="${i < 2 ? 'k' : ''}" style="--i:${i}"></i>`).join('');
+
+document.getElementById('dsGrid').innerHTML = window.DATASETS.map(([d, t], i) =>
+  `<div class="dc fx-scale" data-b="0" style="--d:${6 + i}"><div class="d"><i>▦</i>${d}.2026</div><b>${t}</b></div>`).join('');
+
+document.getElementById('dirs').innerHTML = [
+  ['i-server', 'Захищена інфраструктура, мережі, інтернет', 14],
+  ['i-lock', 'Кібербезпека і ситуаційна аналітика', 2],
+  ['i-cap', 'Цифрові освіта, соцсфера, ветерани, туризм', 7],
+  ['i-building', 'ЦНАП і Дія.Центри', 7],
+  ['i-db', 'Е-урядування, відкриті дані, цифрові навички', 9],
+  ['i-tractor', 'Агропромисловий комплекс', 1]
+].map(([ic, t, n], i) => `<div class="dir fx-scale" data-b="0" style="--d:${3 + i}"><svg class="ico"><use href="#${ic}"/></svg><span class="n">${n} завд.</span><b>${t}</b></div>`).join('');
+
+const DONUT = [['dn1', 309, 0], ['dn2', 32, 309], ['dn3', 29, 341]];
+
+const ICON = { done: '<svg class="ico" style="stroke-width:3"><use href="#i-check"/></svg>', partial: '', fail: '<svg class="ico" style="stroke-width:3"><use href="#i-x"/></svg>', todo: '?' };
+const esc = s => s.replace(/⟦([^⟧]*)⟧/g, '<span class="ph">⟦$1⟧</span>');
+document.querySelectorAll('[data-kr]').forEach(sl => {
+  sl.querySelector('.krs').innerHTML = (window.KR[sl.dataset.kr] || []).map((r, i) =>
+    `<div class="kr${r.note ? ' has-note' : ''}" data-b="0" style="--d:${3 + i * 3}"><div class="st ${r.s}">${ICON[r.s] || ''}</div><div><div class="k">${r.k}</div><h4>${esc(r.t)}</h4><p>${esc(r.e)}</p></div></div>`).join('');
+});
+
+/* =================================================================
+   Кроки
+   ================================================================= */
+const slides = [...document.querySelectorAll('.slide')];
+const steps = [];
+slides.forEach((s, i) => { const n = +(s.dataset.builds || 0); for (let b = 0; b <= n; b++) steps.push([i, b]); });
+const TOTAL = steps.length;
+if (TOTAL !== NOTES.length) console.warn('Кроків', TOTAL, '≠ реплік', NOTES.length);
+
+let cur = -1, curSlide = -1, token = 0;
+const timers = [];
+const later = (fn, ms) => { const t = token; timers.push(setTimeout(() => { if (t === token) fn(); }, ms)); };
+
+const fmt = (v, dec) => v.toLocaleString('uk-UA', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+function countUp(el, delay) {
+  const target = parseFloat(el.dataset.count), dec = +(el.dataset.dec || 0), dur = 1600;
+  el.textContent = fmt(0, dec);
+  timers.push(setTimeout(() => {
+    const st = performance.now();
+    const tick = now => {
+      const p = Math.min(1, (now - st) / dur), e = 1 - Math.pow(2, -10 * p);
+      el.textContent = fmt(target * (p === 1 ? 1 : e), dec);
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, delay));
+}
+
+function typeInto(el, html, cps, delay) {
+  const t = token;
+  const plainLen = html.replace(/<[^>]+>/g, '').length;
+  el.innerHTML = '<span class="caret"></span>';
+  setTimeout(() => {
+    let i = 0;
+    const step = () => {
+      if (t !== token) return;
+      i++;
+      let seen = 0, out = '', inTag = false;
+      for (const ch of html) {
+        if (ch === '<') inTag = true;
+        if (inTag) { out += ch; if (ch === '>') inTag = false; continue; }
+        if (seen >= i) break;
+        out += ch; seen++;
+      }
+      const opens = (out.match(/<span/g) || []).length, closes = (out.match(/<\/span>/g) || []).length;
+      el.innerHTML = out + '</span>'.repeat(Math.max(0, opens - closes)) + (i < plainLen ? '<span class="caret"></span>' : '');
+      if (i < plainLen) setTimeout(step, 1000 / cps);
+    };
+    step();
+  }, delay);
+}
+
+const CODE = '{\n  <span class="k">"mcpServers"</span>: {\n    <span class="k">"prozorro"</span>: { <span class="k">"url"</span>: <span class="s">"https://proyav.od.gov.ua/prozorro/mcp"</span> },\n    <span class="k">"nazk"</span>:     { <span class="k">"url"</span>: <span class="s">"https://proyav.od.gov.ua/nazk/mcp"</span> },\n    <span class="k">"edr"</span>:      { <span class="k">"url"</span>: <span class="s">"https://proyav.od.gov.ua/edr/mcp"</span> }\n  }\n}';
+const QUESTION = 'Скільки Одещина витрачає на ремонт доріг і чи не переплачує громада за поточний ремонт вулиці?';
+const SECTORS = ['освіта', 'охорона здоров\'я', 'соціальна сфера', 'ветерани', 'культура й туризм', 'архіви', 'ЖКГ', 'транспорт', 'містобудування', 'ЦНАП', 'кібербезпека', 'агросектор'];
+const PARTNERS = ['16 структурних підрозділів ОДА', 'районні державні адміністрації', 'органи місцевого самоврядування', 'Одеська обласна рада'];
+
+const HOOKS = {
+  's-p3-open': (b, sl, fresh) => { if (fresh) { const v = sl.querySelector('#pvVideo'); try { v.currentTime = 0; } catch (_) {} v.play().catch(() => {}); } },
+  's-p1-mod': (b, sl, fresh) => {
+    const f = sl.querySelector('#modFill');
+    if (fresh) { f.classList.remove('end'); later(() => f.classList.add('end'), 380 + 500 + 3400); }
+  },
+  's-p1-cert': (b, sl) => sl.classList.toggle('b1', b >= 1),
+  's-p1-res3': (b, sl, fresh) => {
+    if (!fresh) return;
+    const C = 2 * Math.PI * 250, total = 370;
+    DONUT.forEach(([id, v, off], k) => {
+      const c = sl.querySelector('#' + id);
+      c.style.strokeDasharray = `0 ${C}`; c.style.strokeDashoffset = -C * off / total;
+      later(() => { c.style.strokeDasharray = `${C * v / total - 4} ${C}`; }, 500 + k * 250);
+    });
+  },
+  's-p3-conn': (b, sl, fresh) => { if (fresh) typeInto(sl.querySelector('#connCode'), CODE, 75, 700); },
+  's-p3-demo': (b, sl, fresh) => {
+    const q = sl.querySelector('#gptQ');
+    if (fresh && b === 0) typeInto(q, QUESTION, 34, 800);
+    else if (fresh) q.textContent = QUESTION;
+    sl.querySelector('#gptThread').style.transform = b >= 3 ? 'translateY(-170px)' : 'none';
+  },
+  's-p3-thr': (b, sl) => sl.querySelector('#wall').classList.toggle('down', b >= 1),
+  's-p3-econ': (b, sl) => {
+    const w = sl.querySelector('#weeks');
+    w.classList.remove('done');
+    if (b === 1) later(() => w.classList.add('done'), 2000);
+    if (b >= 2) w.classList.add('done');
+  },
+  's-p2-path': (b, sl) => {
+    sl.querySelector('#pathLine').style.setProperty('--p', [0, 33.4, 100][b] + '%');
+    ['pg1', 'pg2', 'pg3', 'pg4'].forEach((id, i) => {
+      const el = sl.querySelector('#' + id);
+      el.style.transitionDelay = b === 2 && i >= 2 ? (i - 1) * 500 + 'ms' : '0ms';
+      el.classList.toggle('on', b === 0 ? i === 0 : b === 1 ? i <= 1 : true);
+    });
+    const det = sl.querySelector('#pathDetail');
+    det.classList.remove('show');
+    det.innerHTML = [SECTORS, PARTNERS, []][b].map((t, i) => `<span style="--i:${i}">${t}</span>`).join('');
+    requestAnimationFrame(() => requestAnimationFrame(() => det.classList.add('show')));
+  }
+};
+
+function applyBuilds(sl, b, fresh) {
+  sl.querySelectorAll('[data-b]').forEach(el => {
+    const on = b >= +el.dataset.b;
+    const was = el.classList.contains('in');
+    if (on && (!was || fresh)) {
+      el.classList.remove('in'); void el.offsetWidth; el.classList.add('in');
+      const d = parseFloat(getComputedStyle(el).getPropertyValue('--d')) || 0;
+      const own = el.matches('[data-count]') ? [el] : [...el.querySelectorAll('[data-count]')].filter(c => c.closest('[data-b]') === el);
+      own.forEach(c => countUp(c, (fresh ? 380 : 0) + d * 90 + 250));
+    } else if (!on) el.classList.remove('in');
+  });
+}
+
+function go(n) {
+  n = Math.max(0, Math.min(TOTAL - 1, n));
+  if (n === cur) return;
+  const [si, b] = steps[n];
+  const fresh = si !== curSlide;
+  token++;
+  timers.splice(0).forEach(clearTimeout);
+  const sl = slides[si];
+
+  if (fresh) {
+    if (curSlide >= 0) {
+      const old = slides[curSlide];
+      old.classList.remove('active');
+      setTimeout(() => { if (!old.classList.contains('active')) old.querySelectorAll('.in').forEach(e => e.classList.remove('in')); }, 750);
+    }
+    sl.classList.add('active');
+    sl.style.setProperty('--base', '380ms');
+    applyBuilds(sl, b, true);
+    curSlide = si;
+    document.getElementById('prog').style.setProperty('--pa', getComputedStyle(sl).getPropertyValue('--acc'));
+  } else {
+    sl.style.setProperty('--base', '0ms');
+    applyBuilds(sl, b, false);
+  }
+  if (HOOKS[sl.id]) HOOKS[sl.id](b, sl, fresh);
+
+  cur = n;
+  document.getElementById('prog').style.width = (n / (TOTAL - 1) * 100) + '%';
+  document.getElementById('stepno').textContent = 'клік ' + n + ' / ' + (TOTAL - 1);
+  try { history.replaceState(null, '', '#' + n); } catch (_) {}
+  notifyPresenter();
+}
+
+let pres = null;
+const titleOf = n => { const s = slides[steps[n][0]]; const h = s.querySelector('h2, h1'); return s.dataset.title || (h ? h.textContent.trim().replace(/\s+/g, ' ') : s.id); };
+function notifyPresenter() { if (pres && !pres.closed) pres.postMessage({ t: 'step', n: cur, total: TOTAL, title: titleOf(cur) }, '*'); }
+addEventListener('message', e => {
+  const m = e.data || {};
+  if (m.t === 'hello') notifyPresenter();
+  if (m.t === 'nav') go(cur + m.d);
+  if (m.t === 'black') document.getElementById('black').classList.toggle('on');
+});
+
+const SECTION = { '1': 's-p1-open', '2': 's-p2-open', '3': 's-p3-open', '4': 's-p4-open' };
+addEventListener('keydown', e => {
+  const k = e.key;
+  if (['ArrowRight', 'PageDown', ' ', 'Enter', 'ArrowDown'].includes(k)) { e.preventDefault(); go(cur + 1); }
+  else if (['ArrowLeft', 'PageUp', 'Backspace', 'ArrowUp'].includes(k)) { e.preventDefault(); go(cur - 1); }
+  else if (k === 'Home') go(0);
+  else if (k === 'End') go(TOTAL - 1);
+  else if (SECTION[k]) { const si = slides.findIndex(s => s.id === SECTION[k]); go(steps.findIndex(([s]) => s === si)); }
+  else if (k.toLowerCase() === 'b' || k === '.') document.getElementById('black').classList.toggle('on');
+  else if (k.toLowerCase() === 'f') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+  else if (k.toLowerCase() === 'p') { pres = window.open(location.href.split('#')[0].split('?')[0] + '?presenter', 'okr-presenter', 'width=1280,height=820'); }
+  else if (k.toLowerCase() === 'n') document.getElementById('stepno').classList.toggle('on');
+  else if (k.toLowerCase() === 'h' || k === '?') document.getElementById('help').classList.toggle('on');
+  else if (k === 'Escape') { document.getElementById('help').classList.remove('on'); document.getElementById('black').classList.remove('on'); }
+});
+stage.addEventListener('click', () => go(cur + 1));
+stage.addEventListener('contextmenu', e => { e.preventDefault(); go(cur - 1); });
+let idle;
+addEventListener('mousemove', () => { document.body.classList.remove('hide-cursor'); clearTimeout(idle); idle = setTimeout(() => document.body.classList.add('hide-cursor'), 2000); });
+
+const start = parseInt(location.hash.slice(1), 10);
+Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise(r => setTimeout(r, 800))]).then(() => go(isNaN(start) ? 0 : start));
+})();
+</script>
+</body>
+</html>
